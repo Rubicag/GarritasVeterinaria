@@ -1,0 +1,41 @@
+# ========================
+# Archivos de compilación
+# ========================
+/target/
+*.class
+
+# ========================
+# Configuración de IDE
+# ========================
+# IntelliJ
+*.iml
+.idea/
+
+# VS Code
+.vscode/
+
+# NetBeans
+nb-configuration.xml
+/nbproject/private/
+/build/
+/dist/
+/out/
+
+# ========================
+# Archivos del sistema
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Logs
+# ========================
+*.log
+
+# ========================
+# Archivos temporales
+# ========================
+*.tmp
+*.bak
+*.swp
+*.swo
