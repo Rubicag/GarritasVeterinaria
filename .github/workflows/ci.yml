@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: ['v*']
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [21]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw || true
+
+      - name: Build (tests + package)
+        run: ./mvnw -B -U clean package
+
+      - name: Generate JaCoCo report (HTML)
+        run: ./mvnw -B org.jacoco:jacoco-maven-plugin:report
+
+      - name: Upload WAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GarritasVeterinaria-war
+          path: target/GarritasVeterinaria-1.0-SNAPSHOT.war
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    # Ejecutar solo cuando se haga push de una tag (refs/tags/*)
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download WAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GarritasVeterinaria-war
+
+      - name: Set up JDK (needed to run mvnw if extracting pom version)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw || true
+
+      - name: Extract project version (optional)
+        id: extract_version
+        run: |
+          set -e
+          version=$(./mvnw -q -DforceStdout org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version || echo "")
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Determine release tag (fallback)
+        id: determine_tag
+        run: |
+          echo "extracted_version='${{ steps.extract_version.outputs.version }}'"
+          if [ -n "${{ steps.extract_version.outputs.version }}" ] && [ "${{ steps.extract_version.outputs.version }}" != "null" ]; then
+            echo "release_tag=v${{ steps.extract_version.outputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Strip prefix refs/tags/ from GITHUB_REF
+            REF_NAME="${GITHUB_REF#refs/tags/}"
+            echo "release_tag=${REF_NAME}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Git tag matches pom.version (optional strict check)
+        if: steps.extract_version.outputs.version != '' && steps.extract_version.outputs.version != 'null'
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          POM_TAG=v${{ steps.extract_version.outputs.version }}
+          echo "Git tag: ${TAG_NAME} - POM tag: ${POM_TAG}"
+          if [ "${TAG_NAME}" != "${POM_TAG}" ]; then
+            echo "ERROR: Git tag (${TAG_NAME}) does not match pom.xml version (${POM_TAG}). Failing the job." >&2
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          # Usamos el release_tag calculado (version desde POM si disponible, sino la tag Git)
+          tag_name: ${{ steps.determine_tag.outputs.release_tag }}
+          name: Release ${{ steps.determine_tag.outputs.release_tag }}
+          body: |
+            Automated release created by CI for tag ${{ steps.determine_tag.outputs.release_tag }}.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename WAR to include version
+        run: |
+          ls -la
+          # Mover el WAR descargado a un nombre con versión extraída
+          mv ./GarritasVeterinaria-war/GarritasVeterinaria-1.0-SNAPSHOT.war ./GarritasVeterinaria-war/GarritasVeterinaria-${{ steps.extract_version.outputs.version }}.war || true
+
+      - name: Attach WAR to Release
+        uses: actions/upload-release-asset@v2
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./GarritasVeterinaria-war/GarritasVeterinaria-${{ steps.extract_version.outputs.version }}.war
+          asset_name: GarritasVeterinaria-${{ steps.extract_version.outputs.version }}.war
+          asset_content_type: application/java-archive
+ 
