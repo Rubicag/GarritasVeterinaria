@@ -4,9 +4,21 @@
  */
 package com.mycompany.repository;
 
+import com.mycompany.model.Usuario;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Interfaz de acceso a usuarios (simple, para pruebas).
  */
 public interface UsuarioRepository {
 	int count();
+
+	List<Usuario> findAll();
+
+	Optional<Usuario> findById(Long id);
+
+	Usuario save(Usuario u);
+
+	void deleteById(Long id);
 }

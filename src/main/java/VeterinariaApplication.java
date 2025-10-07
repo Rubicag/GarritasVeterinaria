@@ -1,12 +1,11 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
-/**
- *
- * @author LUIGGI
- */
-public class VeterinariaApplication {
-    
+@SpringBootApplication(scanBasePackages = "com.mycompany")
+public class VeterinariaApplication extends SpringBootServletInitializer {
+    public static void main(String[] args) {
+        SpringApplication.run(VeterinariaApplication.class, args);
+    }
 }
+ 
