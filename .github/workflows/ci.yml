@@ -87,3 +87,25 @@ jobs:
           files: ./build/*.war
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy WAR to Tomcat Manager
+        if: ${{ secrets.TOMCAT_MANAGER_URL && secrets.TOMCAT_USER && secrets.TOMCAT_PASSWORD }}
+        run: |
+          set -e
+          WAR=$(ls ./build/*.war | head -n 1 || true)
+          if [ -z "$WAR" ]; then
+            echo "No WAR found to deploy" >&2
+            exit 1
+          fi
+          echo "Deploying $WAR to Tomcat Manager..."
+          TOMCAT_URL=${{ secrets.TOMCAT_MANAGER_URL }}
+          TOMCAT_USER=${{ secrets.TOMCAT_USER }}
+          TOMCAT_PASS=${{ secrets.TOMCAT_PASSWORD }}
+          CONTEXT_PATH="${{ secrets.TOMCAT_PATH }}"
+          if [ -z "$CONTEXT_PATH" ]; then
+            CONTEXT_PATH="/"
+          fi
+          # Use manager text API to deploy (update=true). Adjust path param as needed.
+          curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T "$WAR" "$TOMCAT_URL/deploy?path=$CONTEXT_PATH&update=true" --fail
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
