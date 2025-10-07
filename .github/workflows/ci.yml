@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build and test
+    name: Build and test (21)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,9 +22,17 @@ jobs:
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: ${{ matrix.java }}
-          distribution: 'temurin'
-          cache: 'maven'
+          cache: maven
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
 
       - name: Make mvnw executable
         run: chmod +x mvnw || true
@@ -32,16 +40,16 @@ jobs:
       - name: Build (tests + package)
         run: ./mvnw -B -U clean package
 
-      - name: Generate JaCoCo report (HTML)
+      - name: Generate JaCoCo report
         run: ./mvnw -B org.jacoco:jacoco-maven-plugin:report
 
       - name: Upload WAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: GarritasVeterinaria-war
-          path: target/GarritasVeterinaria-1.0-SNAPSHOT.war
+          path: target/*.war
 
-      - name: Upload JaCoCo report
+      - name: Upload JaCoCo HTML report
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
@@ -57,53 +65,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download WAR artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: GarritasVeterinaria-war
-
-      - name: Determine release version (maven)
-        id: extract_version
+      - name: Verify tag version equals pom.version
+        id: verify
         run: |
-          echo "Obtaining project.version via mvn..."
-          version=$(./mvnw -q -DforceStdout help:evaluate -Dexpression=project.version)
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: Verify tag matches pom version
-        run: |
-          release_tag=${GITHUB_REF#refs/tags/}
-          echo "Release tag: $release_tag"
-          echo "POM version: ${{ steps.extract_version.outputs.version }}"
-          if [ "$release_tag" != "v${{ steps.extract_version.outputs.version }}" ]; then
-            echo "Tag does not match pom.xml version: expected v${{ steps.extract_version.outputs.version }} but got $release_tag"
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Tag: $TAG"
+          VERSION=$(./mvnw -q -DforceStdout help:evaluate -Dexpression=project.version)
+          echo "POM version: $VERSION"
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "Tag ($TAG) does not match pom.version (v$VERSION)" >&2
             exit 1
           fi
 
-      - name: Create GitHub Release
-        id: create_release
+      - name: Find WAR
+        id: findwar
+        run: |
+          WAR=$(ls target/*.war | head -n 1 || true)
+          if [ -z "$WAR" ]; then
+            echo "No WAR found in target/" >&2
+            exit 1
+          fi
+          echo "war_path=$WAR" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: Automated release for ${{ github.ref_name }}
+
+      - name: Upload WAR to Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Find downloaded WAR
-        id: find_war
-        run: |
-          WAR_PATH=$(find . -type f -name "*.war" | head -n 1)
-          if [ -z "$WAR_PATH" ]; then
-            echo "No WAR found in workspace — failing"
-            ls -la . || true
-            exit 1
-          fi
-          echo "Found WAR: $WAR_PATH"
-          echo "war_path=$WAR_PATH" >> $GITHUB_OUTPUT
-
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.find_war.outputs.war_path }}
-          asset_name: GarritasVeterinaria-${{ steps.extract_version.outputs.version }}.war
-          asset_content_type: application/java-archive
-
+          files: ${{ steps.findwar.outputs.war_path }}     
