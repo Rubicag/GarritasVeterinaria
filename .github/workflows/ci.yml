@@ -1,11 +1,11 @@
-name: CI GarritasVeterinaria
+name: CI
 
 on:
   push:
-    branches: [main, master]
-    tags: ['v*']
+    branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
-    branches: [main, master]
+    branches: [ main, master ]
 
 jobs:
   build:
@@ -61,7 +61,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: GarritasVeterinaria-war
-          path: ./build
 
       - name: Determine release version (maven)
         id: extract_version
@@ -80,32 +79,31 @@ jobs:
             exit 1
           fi
 
-      - name: Create GitHub Release (with WAR)
+      - name: Create GitHub Release
+        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          files: ./build/*.war
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy WAR to Tomcat Manager
-        if: ${{ secrets.TOMCAT_MANAGER_URL && secrets.TOMCAT_USER && secrets.TOMCAT_PASSWORD }}
+      - name: Find downloaded WAR
+        id: find_war
         run: |
-          set -e
-          WAR=$(ls ./build/*.war | head -n 1 || true)
-          if [ -z "$WAR" ]; then
-            echo "No WAR found to deploy" >&2
+          WAR_PATH=$(find . -type f -name "*.war" | head -n 1)
+          if [ -z "$WAR_PATH" ]; then
+            echo "No WAR found in workspace — failing"
+            ls -la . || true
             exit 1
           fi
-          echo "Deploying $WAR to Tomcat Manager..."
-          TOMCAT_URL=${{ secrets.TOMCAT_MANAGER_URL }}
-          TOMCAT_USER=${{ secrets.TOMCAT_USER }}
-          TOMCAT_PASS=${{ secrets.TOMCAT_PASSWORD }}
-          CONTEXT_PATH="${{ secrets.TOMCAT_PATH }}"
-          if [ -z "$CONTEXT_PATH" ]; then
-            CONTEXT_PATH="/"
-          fi
-          # Use manager text API to deploy (update=true). Adjust path param as needed.
-          curl -u "$TOMCAT_USER:$TOMCAT_PASS" -T "$WAR" "$TOMCAT_URL/deploy?path=$CONTEXT_PATH&update=true" --fail
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Found WAR: $WAR_PATH"
+          echo "war_path=$WAR_PATH" >> $GITHUB_OUTPUT
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.find_war.outputs.war_path }}
+          asset_name: GarritasVeterinaria-${{ steps.extract_version.outputs.version }}.war
+          asset_content_type: application/java-archive
+
