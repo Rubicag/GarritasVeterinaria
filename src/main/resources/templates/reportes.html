@@ -1,11 +1,716 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Reportes - Garritas Veterinaria</title>
-        <meta charset="UTF-8">
-    </head>
-    <body>
-        <h1>Reportes</h1>
-        <p>Plantilla sincronizada para empaquetado.</p>
-    </body>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Reportes y Análisis - Garritas Veterinaria</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-heart-fill me-2"></i>Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/usuarios"><i class="bi bi-people me-1"></i>Usuarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/mascotas"><i class="bi bi-heart me-1"></i>Mascotas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/citas"><i class="bi bi-calendar-event me-1"></i>Citas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/reportes"><i class="bi bi-bar-chart me-1"></i>Reportes</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>Mi Cuenta
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/perfil">Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="/configuracion">Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">Reportes y Análisis</h1>
+                <p class="text-muted">Dashboard ejecutivo con métricas y análisis de la clínica veterinaria</p>
+            </div>
+            <div>
+                <button class="btn btn-primary me-2" onclick="exportarReporte()">
+                    <i class="bi bi-download me-2"></i>Exportar
+                </button>
+                <button class="btn btn-outline-secondary" onclick="actualizarDatos()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros de fecha -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Desde</label>
+                        <input type="date" class="form-control" id="fechaDesde">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Hasta</label>
+                        <input type="date" class="form-control" id="fechaHasta">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Período</label>
+                        <select class="form-select" id="periodo" onchange="aplicarPeriodo()">
+                            <option value="">Personalizado</option>
+                            <option value="hoy">Hoy</option>
+                            <option value="semana">Esta Semana</option>
+                            <option value="mes" selected>Este Mes</option>
+                            <option value="trimestre">Este Trimestre</option>
+                            <option value="año">Este Año</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" onclick="generarReportes()">
+                            <i class="bi bi-search me-1"></i>Generar Reportes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métricas principales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Consultas</h6>
+                                <h3 class="mb-0" id="totalConsultas">0</h3>
+                                <small id="variacionConsultas" class="opacity-75">vs mes anterior</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-file-medical fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Ingresos</h6>
+                                <h3 class="mb-0" id="totalIngresos">$0</h3>
+                                <small id="variacionIngresos" class="opacity-75">vs mes anterior</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Nuevas Mascotas</h6>
+                                <h3 class="mb-0" id="nuevasMascotas">0</h3>
+                                <small id="variacionMascotas" class="opacity-75">vs mes anterior</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-heart fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Ocupación</h6>
+                                <h3 class="mb-0" id="tasaOcupacion">0%</h3>
+                                <small class="opacity-75">Promedio semanal</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-calendar-check fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos principales -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-graph-up me-2"></i>Evolución de Consultas e Ingresos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartConsultasIngresos" height="100"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-pie-chart me-2"></i>Tipos de Consulta
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartTiposConsulta" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análisis detallado -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-bar-chart me-2"></i>Top Veterinarios
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="topVeterinarios">
+                            <!-- Contenido dinámico -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-heart-pulse me-2"></i>Especies Más Atendidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartEspecies" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventario y finanzas -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Estado del Inventario
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h6 class="text-danger">Stock Crítico</h6>
+                                    <h4 class="text-danger" id="stockCritico">0</h4>
+                                    <small class="text-muted">productos</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h6 class="text-warning">Por Vencer</h6>
+                                <h4 class="text-warning" id="productosVencer">0</h4>
+                                <small class="text-muted">en 30 días</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <h6 class="text-primary">Valor Total</h6>
+                                <h4 class="text-primary" id="valorInventario">$0</h4>
+                            </div>
+                            <div class="col-6">
+                                <h6 class="text-success">Movimientos Mes</h6>
+                                <h4 class="text-success" id="movimientosMes">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-cash-stack me-2"></i>Análisis Financiero
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartIngresosMensuales" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tablas de reportes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="reportTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#consultasDetalle">
+                                    <i class="bi bi-file-medical me-1"></i>Detalle Consultas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#citasEstado">
+                                    <i class="bi bi-calendar-event me-1"></i>Estado de Citas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#inventarioMovimientos">
+                                    <i class="bi bi-box-seam me-1"></i>Movimientos Inventario
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="consultasDetalle">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tablaConsultas">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Mascota</th>
+                                                <th>Propietario</th>
+                                                <th>Tipo</th>
+                                                <th>Veterinario</th>
+                                                <th>Costo</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Datos cargados dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="citasEstado">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tablaCitas">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Hora</th>
+                                                <th>Mascota</th>
+                                                <th>Propietario</th>
+                                                <th>Veterinario</th>
+                                                <th>Estado</th>
+                                                <th>Motivo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Datos cargados dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="inventarioMovimientos">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="tablaMovimientos">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Producto</th>
+                                                <th>Tipo</th>
+                                                <th>Cantidad</th>
+                                                <th>Stock Anterior</th>
+                                                <th>Stock Actual</th>
+                                                <th>Motivo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Datos cargados dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script>
+        let chartConsultasIngresos, chartTiposConsulta, chartEspecies, chartIngresosMensuales;
+
+        $(document).ready(function() {
+            // Establecer fecha por defecto (este mes)
+            aplicarPeriodo();
+            
+            // Inicializar gráficos
+            inicializarGraficos();
+            
+            // Cargar datos iniciales
+            generarReportes();
+        });
+
+        function aplicarPeriodo() {
+            const periodo = $('#periodo').val();
+            const hoy = new Date();
+            let fechaDesde, fechaHasta;
+            
+            switch(periodo) {
+                case 'hoy':
+                    fechaDesde = fechaHasta = hoy.toISOString().split('T')[0];
+                    break;
+                case 'semana':
+                    fechaDesde = new Date(hoy.setDate(hoy.getDate() - 7)).toISOString().split('T')[0];
+                    fechaHasta = new Date().toISOString().split('T')[0];
+                    break;
+                case 'mes':
+                    fechaDesde = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+                    fechaHasta = new Date().toISOString().split('T')[0];
+                    break;
+                case 'trimestre':
+                    const trimestre = Math.floor(hoy.getMonth() / 3);
+                    fechaDesde = new Date(hoy.getFullYear(), trimestre * 3, 1).toISOString().split('T')[0];
+                    fechaHasta = new Date().toISOString().split('T')[0];
+                    break;
+                case 'año':
+                    fechaDesde = new Date(hoy.getFullYear(), 0, 1).toISOString().split('T')[0];
+                    fechaHasta = new Date().toISOString().split('T')[0];
+                    break;
+                default:
+                    return; // No cambiar las fechas si es personalizado
+            }
+            
+            $('#fechaDesde').val(fechaDesde);
+            $('#fechaHasta').val(fechaHasta);
+        }
+
+        function inicializarGraficos() {
+            // Gráfico de consultas e ingresos
+            const ctx1 = document.getElementById('chartConsultasIngresos').getContext('2d');
+            chartConsultasIngresos = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Consultas',
+                        data: [],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Ingresos ($)',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de tipos de consulta
+            const ctx2 = document.getElementById('chartTiposConsulta').getContext('2d');
+            chartTiposConsulta = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Consulta General', 'Vacunación', 'Cirugía', 'Emergencia', 'Control'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#007bff',
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545',
+                            '#17a2b8'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Gráfico de especies
+            const ctx3 = document.getElementById('chartEspecies').getContext('2d');
+            chartEspecies = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Consultas',
+                        data: [],
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Gráfico de ingresos mensuales
+            const ctx4 = document.getElementById('chartIngresosMensuales').getContext('2d');
+            chartIngresosMensuales = new Chart(ctx4, {
+                type: 'bar',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Ingresos ($)',
+                        data: [],
+                        backgroundColor: 'rgba(32, 201, 151, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function generarReportes() {
+            const fechaDesde = $('#fechaDesde').val();
+            const fechaHasta = $('#fechaHasta').val();
+            
+            if (!fechaDesde || !fechaHasta) {
+                alert('Por favor selecciona un rango de fechas válido');
+                return;
+            }
+
+            // Cargar datos de las APIs
+            cargarMetricasPrincipales(fechaDesde, fechaHasta);
+            cargarGraficoConsultas(fechaDesde, fechaHasta);
+            cargarGraficoTipos(fechaDesde, fechaHasta);
+            cargarTopVeterinarios(fechaDesde, fechaHasta);
+            cargarGraficoEspecies(fechaDesde, fechaHasta);
+            cargarInventarioStats();
+            cargarGraficoIngresos();
+            cargarTablaConsultas(fechaDesde, fechaHasta);
+            cargarTablaCitas(fechaDesde, fechaHasta);
+            cargarTablaMovimientos(fechaDesde, fechaHasta);
+        }
+
+        function cargarMetricasPrincipales(fechaDesde, fechaHasta) {
+            fetch(`/api/reportes/metricas?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalConsultas').textContent = data.totalConsultas || 0;
+                    document.getElementById('totalIngresos').textContent = '$' + (data.totalIngresos || 0).toLocaleString();
+                    document.getElementById('nuevasMascotas').textContent = data.nuevasMascotas || 0;
+                    document.getElementById('tasaOcupacion').textContent = (data.tasaOcupacion || 0) + '%';
+                    
+                    // Variaciones
+                    document.getElementById('variacionConsultas').textContent = 
+                        (data.variacionConsultas > 0 ? '+' : '') + (data.variacionConsultas || 0) + '% vs mes anterior';
+                    document.getElementById('variacionIngresos').textContent = 
+                        (data.variacionIngresos > 0 ? '+' : '') + (data.variacionIngresos || 0) + '% vs mes anterior';
+                    document.getElementById('variacionMascotas').textContent = 
+                        (data.variacionMascotas > 0 ? '+' : '') + (data.variacionMascotas || 0) + '% vs mes anterior';
+                })
+                .catch(error => console.error('Error al cargar métricas:', error));
+        }
+
+        function cargarGraficoConsultas(fechaDesde, fechaHasta) {
+            fetch(`/api/reportes/consultas-tiempo?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    chartConsultasIngresos.data.labels = data.fechas || [];
+                    chartConsultasIngresos.data.datasets[0].data = data.consultas || [];
+                    chartConsultasIngresos.data.datasets[1].data = data.ingresos || [];
+                    chartConsultasIngresos.update();
+                })
+                .catch(error => console.error('Error al cargar gráfico de consultas:', error));
+        }
+
+        function cargarGraficoTipos(fechaDesde, fechaHasta) {
+            fetch(`/api/reportes/tipos-consulta?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    chartTiposConsulta.data.datasets[0].data = [
+                        data.CONSULTA || 0,
+                        data.VACUNACION || 0,
+                        data.CIRUGIA || 0,
+                        data.EMERGENCIA || 0,
+                        data.CONTROL || 0
+                    ];
+                    chartTiposConsulta.update();
+                })
+                .catch(error => console.error('Error al cargar gráfico de tipos:', error));
+        }
+
+        function cargarTopVeterinarios(fechaDesde, fechaHasta) {
+            fetch(`/api/reportes/top-veterinarios?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    data.forEach((vet, index) => {
+                        const porcentaje = Math.round((vet.consultas / data[0].consultas) * 100);
+                        html += `
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-primary me-2">${index + 1}</span>
+                                    <div>
+                                        <div class="fw-bold">${vet.nombre}</div>
+                                        <small class="text-muted">${vet.consultas} consultas</small>
+                                    </div>
+                                </div>
+                                <div class="progress" style="width: 100px;">
+                                    <div class="progress-bar bg-success" style="width: ${porcentaje}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('topVeterinarios').innerHTML = html;
+                })
+                .catch(error => console.error('Error al cargar top veterinarios:', error));
+        }
+
+        function cargarGraficoEspecies(fechaDesde, fechaHasta) {
+            fetch(`/api/reportes/especies?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    chartEspecies.data.labels = data.especies || [];
+                    chartEspecies.data.datasets[0].data = data.consultas || [];
+                    chartEspecies.update();
+                })
+                .catch(error => console.error('Error al cargar gráfico de especies:', error));
+        }
+
+        function cargarInventarioStats() {
+            fetch('/api/reportes/inventario-stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('stockCritico').textContent = data.stockCritico || 0;
+                    document.getElementById('productosVencer').textContent = data.productosVencer || 0;
+                    document.getElementById('valorInventario').textContent = '$' + (data.valorInventario || 0).toLocaleString();
+                    document.getElementById('movimientosMes').textContent = data.movimientosMes || 0;
+                })
+                .catch(error => console.error('Error al cargar stats de inventario:', error));
+        }
+
+        function cargarGraficoIngresos() {
+            fetch('/api/reportes/ingresos-mensuales')
+                .then(response => response.json())
+                .then(data => {
+                    chartIngresosMensuales.data.datasets[0].data = data.ingresos || [];
+                    chartIngresosMensuales.update();
+                })
+                .catch(error => console.error('Error al cargar gráfico de ingresos:', error));
+        }
+
+        function cargarTablaConsultas(fechaDesde, fechaHasta) {
+            fetch(`/api/reportes/consultas-detalle?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    data.forEach(consulta => {
+                        html += `
+                            <tr>
+                                <td>${new Date(consulta.fechaConsulta).toLocaleDateString()}</td>
+                                <td>${consulta.mascota}</td>
+                                <td>${consulta.propietario}</td>
+                                <td><span class="badge bg-primary">${consulta.tipo}</span></td>
+                                <td>${consulta.veterinario}</td>
+                                <td>$${consulta.costo.toFixed(2)}</td>
+                                <td><span class="badge bg-success">${consulta.estado}</span></td>
+                            </tr>
+                        `;
+                    });
+                    document.querySelector('#tablaConsultas tbody').innerHTML = html;
+                })
+                .catch(error => console.error('Error al cargar tabla de consultas:', error));
+        }
+
+        function cargarTablaCitas(fechaDesde, fechaHasta) {
+            // Similar implementación para citas
+        }
+
+        function cargarTablaMovimientos(fechaDesde, fechaHasta) {
+            // Similar implementación para movimientos de inventario
+        }
+
+        function actualizarDatos() {
+            generarReportes();
+        }
+
+        function exportarReporte() {
+            const fechaDesde = $('#fechaDesde').val();
+            const fechaHasta = $('#fechaHasta').val();
+            window.open(`/reportes/exportar?desde=${fechaDesde}&hasta=${fechaHasta}&formato=pdf`, '_blank');
+        }
+    </script>
+
+    <style>
+        .card-body canvas {
+            max-height: 300px;
+        }
+        
+        .progress {
+            height: 8px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #6c757d;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #198754;
+            border-color: #198754;
+        }
+    </style>
+</body>
 </html>

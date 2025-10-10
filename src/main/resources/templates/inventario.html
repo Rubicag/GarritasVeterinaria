@@ -1,11 +1,618 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Inventario - Garritas Veterinaria</title>
-        <meta charset="UTF-8">
-    </head>
-    <body>
-        <h1>Inventario</h1>
-        <p>Plantilla ubicada en resources/templates para empaquetado por maven-war-plugin.</p>
-    </body>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Inventario - Garritas Veterinaria</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css"/>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-heart-fill me-2"></i>Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/usuarios"><i class="bi bi-people me-1"></i>Usuarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/mascotas"><i class="bi bi-heart me-1"></i>Mascotas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/inventario"><i class="bi bi-box-seam me-1"></i>Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/citas"><i class="bi bi-calendar-event me-1"></i>Citas</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>Mi Cuenta
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/perfil">Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="/configuracion">Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">Inventario</h1>
+                <p class="text-muted">Gestión de medicamentos, vacunas y suministros veterinarios</p>
+            </div>
+            <div>
+                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#movimientoModal">
+                    <i class="bi bi-arrow-left-right me-2"></i>Movimiento
+                </button>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${param.success}">Operación exitosa</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:text="${param.error}">Error en la operación</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Estadísticas del inventario -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Productos</h6>
+                                <h4 class="mb-0" id="totalProductos">0</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-box-seam fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Stock Bajo</h6>
+                                <h4 class="mb-0" id="stockBajo">0</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Por Vencer</h6>
+                                <h4 class="mb-0" id="porVencer">0</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-calendar-x fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Valor Total</h6>
+                                <h4 class="mb-0" id="valorTotal">$0.00</h4>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Buscar Producto</label>
+                        <input type="text" class="form-control" id="buscarProducto" placeholder="Nombre, código...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-select" id="filtroCategoria">
+                            <option value="">Todas</option>
+                            <option value="MEDICAMENTO">Medicamentos</option>
+                            <option value="VACUNA">Vacunas</option>
+                            <option value="ALIMENTO">Alimentos</option>
+                            <option value="ACCESORIO">Accesorios</option>
+                            <option value="HIGIENE">Higiene</option>
+                            <option value="INSTRUMENTAL">Instrumental</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Stock</label>
+                        <select class="form-select" id="filtroStock">
+                            <option value="">Todos</option>
+                            <option value="disponible">Disponible</option>
+                            <option value="bajo">Stock Bajo</option>
+                            <option value="agotado">Agotado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select" id="filtroEstado">
+                            <option value="">Todos</option>
+                            <option value="ACTIVO">Activo</option>
+                            <option value="INACTIVO">Inactivo</option>
+                            <option value="DESCONTINUADO">Descontinuado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="aplicarFiltros()">
+                                <i class="bi bi-search me-1"></i>Buscar
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="exportarExcel()">
+                                <i class="bi bi-file-earmark-excel"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de inventario -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-box-seam me-2"></i>Lista de Productos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="tablaInventario">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Precio</th>
+                                <th>Proveedor</th>
+                                <th>Vencimiento</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="producto : ${productos}">
+                                <td>
+                                    <span class="font-monospace fw-bold" th:text="${producto.codigo}">PRD001</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div th:class="${producto.categoria == 'MEDICAMENTO'} ? 'avatar-sm bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
+                                                     ${producto.categoria == 'VACUNA'} ? 'avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
+                                                     'avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2'">
+                                            <i th:class="${producto.categoria == 'MEDICAMENTO'} ? 'bi bi-capsule' : 
+                                                        ${producto.categoria == 'VACUNA'} ? 'bi bi-shield-check' : 'bi bi-box'"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold" th:text="${producto.nombre}">Amoxicilina 500mg</div>
+                                            <small class="text-muted" th:text="${producto.descripcion}">Antibiótico de amplio espectro</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span th:class="${producto.categoria == 'MEDICAMENTO'} ? 'badge bg-danger' : 
+                                                   ${producto.categoria == 'VACUNA'} ? 'badge bg-success' : 
+                                                   ${producto.categoria == 'ALIMENTO'} ? 'badge bg-warning' : 'badge bg-info'"
+                                          th:text="${producto.categoria}">MEDICAMENTO</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span th:class="${producto.stock <= producto.stockMinimo} ? 'fw-bold text-danger' : 
+                                                       ${producto.stock <= (producto.stockMinimo * 1.5)} ? 'fw-bold text-warning' : 'fw-bold text-success'"
+                                              th:text="${producto.stock}">50</span>
+                                        <small class="text-muted" th:text="'Min: ' + ${producto.stockMinimo}">Min: 10</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(producto.precio, 0, 2)}">$25.00</span>
+                                        <small class="text-muted" th:text="'x ' + ${producto.unidadMedida}">x unidad</small>
+                                    </div>
+                                </td>
+                                <td th:text="${producto.proveedor}">Laboratorio ABC</td>
+                                <td>
+                                    <span th:if="${producto.fechaVencimiento != null}"
+                                          th:class="${#temporals.daysBetween(#temporals.createNow(), producto.fechaVencimiento) <= 30} ? 'badge bg-danger' : 
+                                                   ${#temporals.daysBetween(#temporals.createNow(), producto.fechaVencimiento) <= 90} ? 'badge bg-warning' : 'badge bg-success'"
+                                          th:text="${#temporals.format(producto.fechaVencimiento, 'dd/MM/yyyy')}">
+                                        31/12/2025
+                                    </span>
+                                    <span th:unless="${producto.fechaVencimiento != null}" class="badge bg-secondary">
+                                        N/A
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:class="${producto.activo} ? 'badge bg-success' : 'badge bg-danger'"
+                                          th:text="${producto.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" title="Ver detalles" 
+                                                th:onclick="'verProducto(' + ${producto.id} + ')'">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-warning" title="Editar" 
+                                                th:onclick="'editarProducto(' + ${producto.id} + ')'">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" title="Movimiento" 
+                                                th:onclick="'nuevoMovimiento(' + ${producto.id} + ')'">
+                                            <i class="bi bi-arrow-left-right"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success" title="Historial" 
+                                                th:onclick="'verHistorial(' + ${producto.id} + ')'">
+                                            <i class="bi bi-clock-history"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Producto -->
+    <div class="modal fade" id="nuevoProductoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/inventario}" method="post" id="formNuevoProducto">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Código *</label>
+                                <input type="text" class="form-control" name="codigo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" name="nombre" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" name="descripcion" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Categoría *</label>
+                                <select class="form-select" name="categoria" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="MEDICAMENTO">Medicamento</option>
+                                    <option value="VACUNA">Vacuna</option>
+                                    <option value="ALIMENTO">Alimento</option>
+                                    <option value="ACCESORIO">Accesorio</option>
+                                    <option value="HIGIENE">Higiene</option>
+                                    <option value="INSTRUMENTAL">Instrumental</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Unidad de Medida</label>
+                                <input type="text" class="form-control" name="unidadMedida" placeholder="ej: ml, unidades, kg">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stock Inicial *</label>
+                                <input type="number" class="form-control" name="stock" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stock Mínimo *</label>
+                                <input type="number" class="form-control" name="stockMinimo" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Precio *</label>
+                                <input type="number" class="form-control" name="precio" step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Proveedor</label>
+                                <input type="text" class="form-control" name="proveedor">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de Vencimiento</label>
+                                <input type="date" class="form-control" name="fechaVencimiento">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="activo" checked>
+                                    <label class="form-check-label">
+                                        Producto activo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check2 me-1"></i>Crear Producto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Movimiento -->
+    <div class="modal fade" id="movimientoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-arrow-left-right me-2"></i>Nuevo Movimiento
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/inventario/movimiento}" method="post">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Producto *</label>
+                                <select class="form-select" name="productoId" required>
+                                    <option value="">Seleccionar producto...</option>
+                                    <option th:each="producto : ${productos}" 
+                                            th:value="${producto.id}" 
+                                            th:text="${producto.codigo + ' - ' + producto.nombre}">
+                                        PRD001 - Amoxicilina 500mg
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo *</label>
+                                <select class="form-select" name="tipo" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="ENTRADA">Entrada</option>
+                                    <option value="SALIDA">Salida</option>
+                                    <option value="AJUSTE">Ajuste</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" name="cantidad" min="1" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Motivo</label>
+                                <textarea class="form-control" name="motivo" rows="3" placeholder="Describe el motivo del movimiento..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2 me-1"></i>Registrar Movimiento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Producto -->
+    <div class="modal fade" id="verProductoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-box-seam me-2"></i>Detalles del Producto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detalleProducto">
+                    <!-- Contenido cargado dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar DataTable
+            const table = $('#tablaInventario').DataTable({
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                },
+                pageLength: 10,
+                responsive: true,
+                order: [[0, 'asc']]
+            });
+
+            // Cargar estadísticas
+            cargarEstadisticas();
+        });
+
+        function aplicarFiltros() {
+            const producto = $('#buscarProducto').val();
+            const categoria = $('#filtroCategoria').val();
+            const estado = $('#filtroEstado').val();
+            
+            const table = $('#tablaInventario').DataTable();
+            
+            table.columns(1).search(producto);
+            table.columns(2).search(categoria);
+            table.columns(7).search(estado);
+            
+            table.draw();
+        }
+
+        function limpiarFiltros() {
+            $('#buscarProducto').val('');
+            $('#filtroCategoria').val('');
+            $('#filtroStock').val('');
+            $('#filtroEstado').val('');
+            
+            $('#tablaInventario').DataTable().search('').columns().search('').draw();
+        }
+
+        function cargarEstadisticas() {
+            fetch('/api/inventario/estadisticas')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalProductos').textContent = data.total || 0;
+                    document.getElementById('stockBajo').textContent = data.stockBajo || 0;
+                    document.getElementById('porVencer').textContent = data.porVencer || 0;
+                    document.getElementById('valorTotal').textContent = '$' + (data.valorTotal || 0).toFixed(2);
+                })
+                .catch(error => console.error('Error al cargar estadísticas:', error));
+        }
+
+        function verProducto(id) {
+            fetch(`/api/inventario/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const content = `
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Código:</strong></div>
+                            <div class="col-sm-8">${data.codigo}</div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Nombre:</strong></div>
+                            <div class="col-sm-8">${data.nombre}</div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Categoría:</strong></div>
+                            <div class="col-sm-8"><span class="badge bg-info">${data.categoria}</span></div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Stock Actual:</strong></div>
+                            <div class="col-sm-8"><span class="fw-bold ${data.stock <= data.stockMinimo ? 'text-danger' : 'text-success'}">${data.stock}</span></div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Stock Mínimo:</strong></div>
+                            <div class="col-sm-8">${data.stockMinimo}</div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Precio:</strong></div>
+                            <div class="col-sm-8">$${data.precio.toFixed(2)}</div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Proveedor:</strong></div>
+                            <div class="col-sm-8">${data.proveedor || 'N/A'}</div>
+                        </div>
+                        ${data.fechaVencimiento ? `
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Vencimiento:</strong></div>
+                            <div class="col-sm-8">${new Date(data.fechaVencimiento).toLocaleDateString()}</div>
+                        </div>
+                        ` : ''}
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Estado:</strong></div>
+                            <div class="col-sm-8"><span class="badge ${data.activo ? 'bg-success' : 'bg-danger'}">${data.activo ? 'Activo' : 'Inactivo'}</span></div>
+                        </div>
+                    `;
+                    document.getElementById('detalleProducto').innerHTML = content;
+                    new bootstrap.Modal(document.getElementById('verProductoModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al cargar los detalles del producto');
+                });
+        }
+
+        function editarProducto(id) {
+            window.location.href = `/inventario/${id}/editar`;
+        }
+
+        function nuevoMovimiento(id) {
+            // Preseleccionar el producto en el modal de movimiento
+            $('#movimientoModal select[name="productoId"]').val(id);
+            new bootstrap.Modal(document.getElementById('movimientoModal')).show();
+        }
+
+        function verHistorial(id) {
+            window.location.href = `/inventario/${id}/historial`;
+        }
+
+        function exportarExcel() {
+            window.location.href = '/inventario/exportar/excel';
+        }
+    </script>
+
+    <style>
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+        }
+
+        .font-monospace {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</body>
 </html>
