@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Collections;
 
 @Component
-@ConditionalOnProperty(name = "jwt.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "jwt.enabled", havingValue = "true", matchIfMissing = false)
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired

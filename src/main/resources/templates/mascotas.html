@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <title>Gestión de Mascotas - Garritas Veterinaria</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --vet-primary: #10b981;
+            --vet-secondary: #059669;
+            --vet-accent: #34d399;
+            --vet-light: #ecfdf5;
+            --vet-dark: #047857;
+            --shadow-soft: 0 1px 3px rgba(16, 185, 129, 0.12), 0 1px 2px rgba(16, 185, 129, 0.24);
+            --shadow-medium: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
+            --shadow-strong: 0 10px 25px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
+            --border-radius: 16px;
+            --border-radius-lg: 20px;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #ecfdf5 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--vet-primary) 0%, var(--vet-secondary) 100%) !important;
+            box-shadow: var(--shadow-strong);
+            border: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.6rem;
+            color: white !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+            margin: 0 6px;
+            padding: 10px 18px !important;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .nav-link:hover::before {
+            left: 100%;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .main-container {
+            padding: 2.5rem 1rem;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-strong);
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--vet-primary), var(--vet-accent), var(--vet-secondary));
+        }
+        
+        .page-title {
+            color: var(--vet-dark);
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            font-size: 2rem;
+        }
+        
+        .page-subtitle {
+            color: #6b7280;
+            margin: 1rem 0 0 0;
+            font-weight: 400;
+            font-size: 1.1rem;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 1.8rem;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--vet-accent) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .stat-card:hover::before {
+            opacity: 0.05;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-strong);
+            border-color: var(--vet-primary);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--vet-primary);
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--vet-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .content-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-strong);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            padding: 1.5rem 2rem;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            background: linear-gradient(135deg, var(--vet-secondary), var(--vet-dark));
+        }
+        
+        .pet-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--vet-accent), var(--vet-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .table-custom {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+        }
+        
+        .table-custom thead th {
+            background: linear-gradient(135deg, var(--vet-light), #f0fdf4);
+            color: var(--vet-dark);
+            font-weight: 600;
+            border: none;
+            padding: 1.2rem 1rem;
+        }
+        
+        .table-custom tbody tr {
+            transition: all 0.2s ease;
+            border: none;
+        }
+        
+        .table-custom tbody tr:hover {
+            background: linear-gradient(135deg, var(--vet-light), rgba(16, 185, 129, 0.05));
+            transform: scale(1.01);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .table-custom tbody td {
+            padding: 1.2rem 1rem;
+            border: none;
+            vertical-align: middle;
+        }
+        
+        .badge-custom {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .badge-active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .badge-inactive {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .action-buttons .btn {
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin: 0 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .action-buttons .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+        
+        .fab {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-strong);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.3);
+            background: linear-gradient(135deg, var(--vet-secondary), var(--vet-dark));
+        }
+        
+        .modal-content-custom {
+            border-radius: var(--border-radius-lg);
+            border: none;
+            box-shadow: var(--shadow-strong);
+        }
+        
+        .modal-header-custom {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+            border: none;
+        }
+        
+        .form-control-custom {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control-custom:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            padding-left: 3rem;
+            border-radius: 25px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-cards {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .page-header {
+                padding: 1.5rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .fab {
+                bottom: 1rem;
+                right: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+        
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .floating-element {
+            position: absolute;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+        
+        .floating-element:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            top: 40%;
+            right: 20%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/web/dashboard">
+                🐾 Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/dashboard">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/web/mascotas">
+                            <i class="fas fa-paw"></i> Mascotas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/citas">
+                            <i class="fas fa-calendar-alt"></i> Citas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/usuarios">
+                            <i class="fas fa-users"></i> Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/inventario">
+                            <i class="fas fa-boxes"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/reportes">
+                            <i class="fas fa-chart-bar"></i> Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/historial">
+                            <i class="fas fa-file-medical"></i> Historial
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Salir
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        <!-- Header Section -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-paw"></i>
+                Gestión de Mascotas
+            </h1>
+            <p class="page-subtitle">Administra toda la información de las mascotas registradas en el sistema</p>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <i class="fas fa-paw stat-icon"></i>
+                <div class="stat-number" th:text="${totalMascotas ?: 0}">0</div>
+                <div class="stat-label">Total Mascotas</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-dog stat-icon"></i>
+                <div class="stat-number" th:text="${perros ?: 0}">0</div>
+                <div class="stat-label">Perros</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-cat stat-icon"></i>
+                <div class="stat-number" th:text="${gatos ?: 0}">0</div>
+                <div class="stat-label">Gatos</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-heartbeat stat-icon"></i>
+                <div class="stat-number" th:text="${mascotasActivas ?: 0}">0</div>
+                <div class="stat-label">Activas</div>
+            </div>
+        </div>
+        
+        
+        <!-- Search Container -->
+        <div class="search-container">
+            <div class="position-relative">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="form-control search-input" placeholder="Buscar mascotas por nombre, propietario o especie..." id="searchInput">
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ul me-2"></i>
+                    Lista de Mascotas
+                </h5>
+                <button class="btn btn-primary-custom pulse-animation" data-bs-toggle="modal" data-bs-target="#mascotaModal">
+                    <i class="fas fa-plus me-2"></i>Nueva Mascota
+                </button>
+            </div>
+            <div class="table-responsive p-3">
+                <table class="table table-custom" id="mascotasTable">
+                    <thead>
+                        <tr>
+                            <th>Avatar</th>
+                            <th>Nombre</th>
+                            <th>Especie</th>
+                            <th>Raza</th>
+                            <th>Edad</th>
+                            <th>Propietario</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="mascota : ${mascotas}">
+                            <td>
+                                <div class="pet-avatar">
+                                    <i class="fas" th:class="${mascota.especie == 'Perro' ? 'fas fa-dog' : 'fas fa-cat'}"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <strong th:text="${mascota.nombre}">Nombre</strong>
+                            </td>
+                            <td th:text="${mascota.especie}">Especie</td>
+                            <td th:text="${mascota.raza}">Raza</td>
+                            <td>
+                                <span th:text="${mascota.edad}">0</span> años
+                            </td>
+                            <td th:text="${mascota.propietario != null ? mascota.propietario.nombre : 'Sin propietario'}">Propietario</td>
+                            <td>
+                                <span class="badge-custom" 
+                                      th:class="${mascota.activo ? 'badge-active' : 'badge-inactive'}"
+                                      th:text="${mascota.activo ? 'Activa' : 'Inactiva'}">
+                                    Estado
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-primary" 
+                                            th:onclick="'editarMascota(' + ${mascota.id} + ')'"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info" 
+                                            th:onclick="'verHistorial(' + ${mascota.id} + ')'"
+                                            title="Ver Historial">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" 
+                                            th:onclick="'eliminarMascota(' + ${mascota.id} + ')'"
+                                            title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+        <button class="fab" data-bs-toggle="modal" data-bs-target="#mascotaModal" title="Nueva Mascota">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+        }
+        
+        .btn-edit:hover {
+            background: #fde68a;
+            color: #78350f;
+        }
+        
+        .btn-delete {
+            background: #fecaca;
+            color: #991b1b;
+        }
+        
+        .btn-delete:hover {
+            background: #fca5a5;
+            color: #7f1d1d;
+        }
+        
+        .alert-custom {
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 1rem 1.5rem;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .modal-content {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .modal-header {
+            background: var(--vet-light);
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+        
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--vet-dark);
+            margin-bottom: 8px;
+        }
+        
+        .mascota-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .mascota-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .mascota-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--vet-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--vet-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/web/dashboard">
+                <i class="bi bi-heart-pulse-fill me-2"></i>
+                Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/dashboard">
+                            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/web/mascotas">
+                            <i class="bi bi-heart-fill me-1"></i>Mascotas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/usuarios">
+                            <i class="bi bi-people-fill me-1"></i>Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/inventario">
+                            <i class="bi bi-box-seam me-1"></i>Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/reportes">
+                            <i class="bi bi-graph-up me-1"></i>Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/historial">
+                            <i class="bi bi-journal-medical me-1"></i>Historial
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-heart-fill text-primary"></i>
+                Gestión de Mascotas
+            </h1>
+            <p class="page-subtitle">Administra la información de todas las mascotas registradas en el sistema</p>
+        </div>
+
+        <!-- Alerts -->
+        <div th:if="${success}" class="alert alert-success alert-custom alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-custom alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <h3 class="stats-number" th:text="${totalMascotas ?: 0}">0</h3>
+                    <p class="stats-label">Total Mascotas</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <h3 class="stats-number">0</h3>
+                    <p class="stats-label">Citas Hoy</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <h3 class="stats-number">0</h3>
+                    <p class="stats-label">Vacunas Pendientes</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <h3 class="stats-number">0</h3>
+                    <p class="stats-label">Consultas Mes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Card -->
+        <div class="content-card">
+            <div class="card-header-custom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-dark">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Lista de Mascotas
+                    </h5>
+                    <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#nuevaMascotaModal">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Nueva Mascota
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <!-- Empty State -->
+                <div th:if="${mascotas == null or mascotas.isEmpty()}" class="text-center py-5">
+                    <i class="bi bi-heart display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay mascotas registradas</h4>
+                    <p class="text-muted">Comienza agregando la primera mascota al sistema</p>
+                    <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#nuevaMascotaModal">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Registrar Primera Mascota
+                    </button>
+                </div>
+
+                <!-- Mascotas List -->
+                <div th:if="${mascotas != null and !mascotas.isEmpty()}">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4 mb-3" th:each="mascota : ${mascotas}">
+                            <div class="mascota-card">
+                                <div class="d-flex align-items-start">
+                                    <div class="mascota-avatar me-3">
+                                        <i class="bi bi-heart-fill"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-1" th:text="${mascota.nombre}">Nombre Mascota</h6>
+                                        <p class="text-muted small mb-1">
+                                            <i class="bi bi-tag me-1"></i>
+                                            <span th:text="${mascota.especie}">Especie</span> - 
+                                            <span th:text="${mascota.raza}">Raza</span>
+                                        </p>
+                                        <p class="text-muted small mb-2">
+                                            <i class="bi bi-calendar me-1"></i>
+                                            <span th:text="${mascota.fechaNacimiento}">Fecha Nacimiento</span>
+                                        </p>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-action btn-edit btn-sm">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-action btn-delete btn-sm">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table View (Alternative) -->
+                <div th:if="${mascotas != null and !mascotas.isEmpty()}" class="d-none">
+                    <table class="table table-hover" id="mascotasTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Especie</th>
+                                <th>Raza</th>
+                                <th>Edad</th>
+                                <th>Propietario</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="mascota : ${mascotas}">
+                                <td th:text="${mascota.id}">1</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="mascota-avatar me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            <i class="bi bi-heart-fill"></i>
+                                        </div>
+                                        <span th:text="${mascota.nombre}">Nombre</span>
+                                    </div>
+                                </td>
+                                <td th:text="${mascota.especie}">Perro</td>
+                                <td th:text="${mascota.raza}">Labrador</td>
+                                <td>2 años</td>
+                                <td th:text="${mascota.propietario != null ? mascota.propietario.nombre : 'Sin propietario'}">Juan Pérez</td>
+                                <td>
+                                    <span class="badge badge-custom badge-activo">Activo</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-action btn-edit btn-sm" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-delete btn-sm" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Mascota -->
+    <div class="modal fade" id="nuevaMascotaModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header modal-header-custom">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Nueva Mascota
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="/web/mascotas/guardar" id="mascotaForm">
+                    <div class="modal-body p-4">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nombre" class="form-label">
+                                    <i class="fas fa-paw me-1 text-primary"></i>Nombre de la Mascota *
+                                </label>
+                                <input type="text" class="form-control form-control-custom" id="nombre" name="nombre" required placeholder="Ej: Firulais">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="especie" class="form-label">
+                                    <i class="fas fa-list me-1 text-primary"></i>Especie *
+                                </label>
+                                <select class="form-select form-control-custom" id="especie" name="especie" required>
+                                    <option value="">Seleccionar especie...</option>
+                                    <option value="Perro">🐕 Perro</option>
+                                    <option value="Gato">🐱 Gato</option>
+                                    <option value="Ave">🦜 Ave</option>
+                                    <option value="Roedor">🐹 Roedor</option>
+                                    <option value="Reptil">🦎 Reptil</option>
+                                    <option value="Pez">🐠 Pez</option>
+                                    <option value="Otro">🐾 Otro</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="raza" class="form-label">
+                                    <i class="fas fa-dna me-1 text-primary"></i>Raza *
+                                </label>
+                                <input type="text" class="form-control form-control-custom" id="raza" name="raza" required placeholder="Ej: Labrador">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="color" class="form-label">
+                                    <i class="fas fa-palette me-1 text-primary"></i>Color
+                                </label>
+                                <input type="text" class="form-control form-control-custom" id="color" name="color" placeholder="Ej: Dorado">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="peso" class="form-label">
+                                    <i class="fas fa-weight me-1 text-primary"></i>Peso (kg)
+                                </label>
+                                <input type="number" step="0.1" class="form-control form-control-custom" id="peso" name="peso" min="0" placeholder="0.0">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edad" class="form-label">
+                                    <i class="fas fa-birthday-cake me-1 text-primary"></i>Edad (años)
+                                </label>
+                                <input type="number" class="form-control form-control-custom" id="edad" name="edad" min="0" placeholder="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="fechaNacimiento" class="form-label">
+                                    <i class="fas fa-calendar me-1 text-primary"></i>Fecha de Nacimiento
+                                </label>
+                                <input type="date" class="form-control form-control-custom" id="fechaNacimiento" name="fechaNacimiento">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="propietarioId" class="form-label">
+                                <i class="fas fa-user me-1 text-primary"></i>Propietario *
+                            </label>
+                            <select class="form-select form-control-custom" id="propietarioId" name="propietario.id" required>
+                                <option value="">Seleccionar propietario...</option>
+                                <option th:each="usuario : ${usuarios}" 
+                                        th:value="${usuario.id}" 
+                                        th:text="${usuario.nombre + ' - ' + usuario.email}">Usuario</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">
+                                <i class="fas fa-notes-medical me-1 text-primary"></i>Observaciones
+                            </label>
+                            <textarea class="form-control form-control-custom" id="observaciones" name="observaciones" rows="3" placeholder="Información adicional sobre la mascota..."></textarea>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="activo" name="activo" checked>
+                            <label class="form-check-label" for="activo">
+                                <i class="fas fa-check-circle me-1 text-success"></i>Mascota activa en el sistema
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="fas fa-save me-1"></i>Guardar Mascota
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Inicializar DataTable con configuración avanzada
+            if ($('#mascotasTable').length) {
+                $('#mascotasTable').DataTable({
+                    language: {
+                        url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                    },
+                    pageLength: 10,
+                    responsive: true,
+                    order: [[1, 'asc']], // Ordenar por nombre
+                    columnDefs: [
+                        { orderable: false, targets: [0, 7] } // Avatar y acciones no ordenables
+                    ],
+                    drawCallback: function() {
+                        // Aplicar animaciones después de cada dibujo de tabla
+                        $('.table tbody tr').hover(
+                            function() { $(this).addClass('table-hover-effect'); },
+                            function() { $(this).removeClass('table-hover-effect'); }
+                        );
+                    }
+                });
+            }
+
+            // Función de búsqueda en tiempo real
+            $('#searchInput').on('keyup', function() {
+                var value = $(this).val().toLowerCase();
+                $('#mascotasTable tbody tr').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            // Auto-hide alerts con animación
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Validación de formulario con efectos visuales
+            $('#mascotaForm').on('submit', function(e) {
+                var isValid = true;
+                
+                // Validar campos requeridos
+                $(this).find('[required]').each(function() {
+                    if (!$(this).val()) {
+                        $(this).addClass('is-invalid');
+                        isValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Campos requeridos',
+                        text: 'Por favor complete todos los campos obligatorios',
+                        confirmButtonColor: '#10b981'
+                    });
+                }
+            });
+
+            // Limpiar validación al escribir
+            $('.form-control-custom').on('input', function() {
+                $(this).removeClass('is-invalid');
+            });
+
+            // Efectos hover para stat-cards
+            $('.stat-card').hover(
+                function() { 
+                    $(this).addClass('pulse-animation');
+                },
+                function() { 
+                    $(this).removeClass('pulse-animation');
+                }
+            );
+
+            // Animación de entrada para las tarjetas
+            $('.stat-card, .content-card').css('opacity', '0').animate({
+                opacity: 1
+            }, 600);
+        });
+
+        // Funciones para acciones de tabla
+        function editarMascota(id) {
+            // TODO: Implementar edición de mascota
+            Swal.fire({
+                icon: 'info',
+                title: 'Función en desarrollo',
+                text: 'La edición de mascotas estará disponible próximamente',
+                confirmButtonColor: '#10b981'
+            });
+        }
+
+        function verHistorial(id) {
+            // TODO: Implementar ver historial
+            Swal.fire({
+                icon: 'info',
+                title: 'Función en desarrollo',
+                text: 'El historial médico estará disponible próximamente',
+                confirmButtonColor: '#10b981'
+            });
+        }
+
+        function eliminarMascota(id) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // TODO: Implementar eliminación
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Eliminado',
+                        text: 'La mascota ha sido eliminada correctamente',
+                        confirmButtonColor: '#10b981'
+                    });
+                }
+            });
+        }
+    </script>
+    
+    <!-- SweetAlert2 para alertas modernas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>

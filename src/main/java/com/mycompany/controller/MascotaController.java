@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
-@RequestMapping("/api/mascotas")
+@RequestMapping("/mascotas")
 @CrossOrigin(origins = "*")
 public class MascotaController {
 

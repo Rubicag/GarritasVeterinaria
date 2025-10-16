@@ -8,18 +8,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/servicios")
+@RequestMapping("/servicios")
 public class ServicioController {
 
     private final ServicioService service;
     public ServicioController(ServicioService service) { this.service = service; }
 
     @GetMapping
-    public List<Servicio> list() { return service.listAll(); }
+    public List<Servicio> list() {
+        System.out.println("[INFO] Listando todos los servicios...");
+        List<Servicio> servicios = service.listAll();
+        System.out.println("[DEBUG] Servicios obtenidos: " + servicios.size());
+        return servicios;
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Servicio> get(@PathVariable Long id) {
+        System.out.println("[INFO] Obteniendo servicio con ID: " + id);
         Optional<Servicio> s = service.getById(id);
+        if (s.isPresent()) {
+            System.out.println("[DEBUG] Servicio encontrado: " + s.get());
+        } else {
+            System.out.println("[WARN] Servicio no encontrado para ID: " + id);
+        }
         return s.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 

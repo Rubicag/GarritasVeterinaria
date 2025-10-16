@@ -1,49 +1,474 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Inventario - Garritas Veterinaria</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <title>Inventario - Garritas Veterinaria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --vet-primary: #10b981;
+            --vet-secondary: #059669;
+            --vet-accent: #34d399;
+            --vet-dark: #064e3b;
+            --vet-light: #d1fae5;
+            --vet-gradient: linear-gradient(135deg, #10b981, #059669);
+            --vet-gradient-soft: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            --shadow-soft: 0 2px 15px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 25px rgba(0, 0, 0, 0.12);
+            --shadow-strong: 0 8px 35px rgba(0, 0, 0, 0.15);
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Modern Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary)) !important;
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(10px);
+            border: none;
+            padding: 1rem 0;
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-top: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .page-title {
+            background: var(--vet-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* Statistics Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--vet-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-strong);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            background: var(--vet-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--vet-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        /* Low Stock Alert */
+        .low-stock-alert {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .low-stock-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Content Card */
+        .content-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            padding: 1.5rem 2rem;
+            border: none;
+            font-weight: 600;
+        }
+
+        /* Search Container */
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            padding-left: 3rem;
+            border-radius: 25px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 1.2rem;
+        }
+
+        /* Table Styling */
+        .table-custom {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+        }
+
+        .table-custom thead th {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 1rem;
+        }
+
+        .table-custom tbody tr {
+            transition: var(--transition);
+            border: none;
+        }
+
+        .table-custom tbody tr:hover {
+            background: var(--vet-gradient-soft);
+            transform: scale(1.02);
+        }
+
+        .table-custom tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Badges */
+        .badge-custom {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .badge-disponible { background: #d1fae5; color: #065f46; }
+        .badge-bajo { background: #fef3c7; color: #92400e; }
+        .badge-agotado { background: #fee2e2; color: #991b1b; }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        /* Floating Action Button */
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .fab {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--vet-gradient);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-strong);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 40px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Button Styling */
+        .btn-primary-custom {
+            background: var(--vet-gradient);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            background: linear-gradient(135deg, var(--vet-secondary), var(--vet-dark));
+        }
+
+        /* Form Controls */
+        .form-control-custom {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Animations */
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            top: 40%;
+            right: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .floating-action {
+                bottom: 1rem;
+                right: 1rem;
+            }
+
+            .fab {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
 </head>
-<body class="bg-light">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-heart-fill me-2"></i>Garritas Veterinaria
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/web/dashboard">
+                <i class="fas fa-paw me-2"></i>Garritas Veterinaria
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                        <a class="nav-link" href="/web/dashboard">
+                            <i class="fas fa-chart-line me-1"></i>Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/usuarios"><i class="bi bi-people me-1"></i>Usuarios</a>
+                        <a class="nav-link" href="/web/mascotas">
+                            <i class="fas fa-paw me-1"></i>Mascotas
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/mascotas"><i class="bi bi-heart me-1"></i>Mascotas</a>
+                        <a class="nav-link" href="/web/citas">
+                            <i class="fas fa-calendar-alt me-1"></i>Citas
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="/inventario"><i class="bi bi-box-seam me-1"></i>Inventario</a>
+                        <a class="nav-link active" href="/web/inventario">
+                            <i class="fas fa-boxes me-1"></i>Inventario
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/citas"><i class="bi bi-calendar-event me-1"></i>Citas</a>
+                        <a class="nav-link" href="/web/reportes">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/historial">
+                            <i class="fas fa-history me-1"></i>Historial
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/usuarios">
+                            <i class="fas fa-users me-1"></i>Usuarios
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i>Mi Cuenta
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span th:text="${#authentication.name}">Usuario</span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/perfil">Mi Perfil</a></li>
-                            <li><a class="dropdown-item" href="/configuracion">Configuración</a></li>
+                            <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog me-2"></i>Configuración</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -51,48 +476,84 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h3 mb-1">Inventario</h1>
-                <p class="text-muted">Gestión de medicamentos, vacunas y suministros veterinarios</p>
+    <!-- Main Content -->
+    <div class="container main-container">
+        <!-- Header Section -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-boxes"></i>
+                Gestión de Inventario
+            </h1>
+            <p class="page-subtitle">Control completo de medicamentos, vacunas y suministros veterinarios</p>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <i class="fas fa-boxes stat-icon"></i>
+                <div class="stat-number" th:text="${totalProductos ?: 0}">0</div>
+                <div class="stat-label">Total Productos</div>
             </div>
-            <div>
-                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
-                    <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
-                </button>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#movimientoModal">
-                    <i class="bi bi-arrow-left-right me-2"></i>Movimiento
-                </button>
+            <div class="stat-card">
+                <i class="fas fa-exclamation-triangle stat-icon"></i>
+                <div class="stat-number" th:text="${productosStockBajo ?: 0}">0</div>
+                <div class="stat-label">Stock Bajo</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-times-circle stat-icon"></i>
+                <div class="stat-number" th:text="${productosAgotados ?: 0}">0</div>
+                <div class="stat-label">Agotados</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-dollar-sign stat-icon"></i>
+                <div class="stat-number" th:text="${valorTotalInventario ?: '0'}">$0</div>
+                <div class="stat-label">Valor Total</div>
             </div>
         </div>
 
-        <!-- Mensajes -->
-        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
+        <!-- Low Stock Alert -->
+        <div class="low-stock-alert" th:if="${productosStockBajo != null and productosStockBajo > 0}">
+            <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-exclamation-triangle text-warning fs-3 me-3"></i>
+                <div>
+                    <h5 class="mb-1 text-warning">Productos con Stock Bajo</h5>
+                    <p class="mb-0 text-muted">Los siguientes productos necesitan reabastecimiento urgente:</p>
+                </div>
+            </div>
+            <div th:each="producto : ${productosConStockBajo}">
+                <div class="low-stock-item">
+                    <div>
+                        <strong th:text="${producto.nombre}">Producto</strong>
+                        <small class="text-muted d-block" th:text="${producto.categoria}">Categoría</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge badge-custom badge-bajo" th:text="'Stock: ' + ${producto.cantidad}">Stock: 0</span>
+                        <button class="btn btn-sm btn-warning ms-2" th:onclick="'editarProducto(' + ${producto.id} + ')'">
+                            <i class="fas fa-plus"></i> Reabastecer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show mb-4">
+            <i class="fas fa-check-circle me-2"></i>
             <span th:text="${param.success}">Operación exitosa</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         
-        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show mb-4">
+            <i class="fas fa-exclamation-triangle me-2"></i>
             <span th:text="${param.error}">Error en la operación</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Estadísticas del inventario -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="card-title">Total Productos</h6>
-                                <h4 class="mb-0" id="totalProductos">0</h4>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-box-seam fs-1 opacity-50"></i>
+        <!-- Search Container -->
+        <div class="search-container">
+            <div class="position-relative">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="form-control search-input" placeholder="Buscar productos por nombre, código o categoría..." id="searchInput">
                             </div>
                         </div>
                     </div>
@@ -145,18 +606,21 @@
             </div>
         </div>
 
-        <!-- Filtros -->
-        <div class="card mb-4">
-            <div class="card-body">
+        <!-- Filters Card -->
+        <div class="content-card mb-4">
+            <div class="card-header-custom">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+                </h6>
+            </div>
+            <div class="p-3">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Buscar Producto</label>
-                        <input type="text" class="form-control" id="buscarProducto" placeholder="Nombre, código...">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Categoría</label>
-                        <select class="form-select" id="filtroCategoria">
-                            <option value="">Todas</option>
+                        <label class="form-label">
+                            <i class="fas fa-tag me-1"></i>Categoría
+                        </label>
+                        <select class="form-select form-control-custom" id="filtroCategoria">
+                            <option value="">Todas las categorías</option>
                             <option value="MEDICAMENTO">Medicamentos</option>
                             <option value="VACUNA">Vacunas</option>
                             <option value="ALIMENTO">Alimentos</option>
@@ -165,35 +629,35 @@
                             <option value="INSTRUMENTAL">Instrumental</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Stock</label>
-                        <select class="form-select" id="filtroStock">
-                            <option value="">Todos</option>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-layer-group me-1"></i>Estado del Stock
+                        </label>
+                        <select class="form-select form-control-custom" id="filtroStock">
+                            <option value="">Todos los estados</option>
                             <option value="disponible">Disponible</option>
                             <option value="bajo">Stock Bajo</option>
                             <option value="agotado">Agotado</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Estado</label>
-                        <select class="form-select" id="filtroEstado">
-                            <option value="">Todos</option>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-info-circle me-1"></i>Estado del Producto
+                        </label>
+                        <select class="form-select form-control-custom" id="filtroEstado">
+                            <option value="">Todos los estados</option>
                             <option value="ACTIVO">Activo</option>
                             <option value="INACTIVO">Inactivo</option>
                             <option value="DESCONTINUADO">Descontinuado</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">&nbsp;</label>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary" onclick="aplicarFiltros()">
-                                <i class="bi bi-search me-1"></i>Buscar
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="d-flex gap-2 w-100">
+                            <button class="btn btn-primary-custom flex-fill" onclick="aplicarFiltros()">
+                                <i class="fas fa-search me-1"></i>Aplicar
                             </button>
-                            <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                            <button class="btn btn-outline-info" onclick="exportarExcel()">
-                                <i class="bi bi-file-earmark-excel"></i>
+                            <button class="btn btn-secondary" onclick="limpiarFiltros()">
+                                <i class="fas fa-undo me-1"></i>Limpiar
                             </button>
                         </div>
                     </div>
@@ -201,36 +665,114 @@
             </div>
         </div>
 
-        <!-- Tabla de inventario -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-box-seam me-2"></i>Lista de Productos
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ul me-2"></i>
+                    Inventario de Productos
                 </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
+                        <i class="fas fa-plus me-2"></i>Nuevo Producto
+                    </button>
+                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#movimientoModal">
+                        <i class="fas fa-exchange-alt me-2"></i>Movimiento
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="tablaInventario">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Código</th>
-                                <th>Producto</th>
-                                <th>Categoría</th>
-                                <th>Stock</th>
-                                <th>Precio</th>
-                                <th>Proveedor</th>
-                                <th>Vencimiento</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr th:each="producto : ${productos}">
-                                <td>
-                                    <span class="font-monospace fw-bold" th:text="${producto.codigo}">PRD001</span>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
+            <div class="table-responsive p-3">
+                <table class="table table-custom" id="inventarioTable">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Stock</th>
+                            <th>Precio</th>
+                            <th>Estado</th>
+                            <th>Vencimiento</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="producto : ${productos}">
+                            <td>
+                                <code th:text="${producto.codigo}">P001</code>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong th:text="${producto.nombre}">Producto</strong><br>
+                                    <small class="text-muted" th:text="${producto.descripcion}">Descripción</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-custom bg-secondary" th:text="${producto.categoria}">Categoría</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span th:text="${producto.cantidadStock}">0</span>
+                                    <span class="badge-custom ms-2" 
+                                          th:class="${producto.cantidadStock > producto.stockMinimo ? 'badge-disponible' : 
+                                                    producto.cantidadStock > 0 ? 'badge-bajo' : 'badge-agotado'}"
+                                          th:text="${producto.cantidadStock > producto.stockMinimo ? 'Disponible' : 
+                                                   producto.cantidadStock > 0 ? 'Bajo' : 'Agotado'}">Estado</span>
+                                </div>
+                            </td>
+                            <td>
+                                <strong th:text="'$' + ${producto.precio}">$0.00</strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-custom" 
+                                      th:class="${producto.estado == 'ACTIVO' ? 'badge-disponible' : 
+                                                producto.estado == 'INACTIVO' ? 'badge-bajo' : 'badge-agotado'}"
+                                      th:text="${producto.estado}">Estado</span>
+                            </td>
+                            <td>
+                                <span th:if="${producto.fechaVencimiento}" 
+                                      th:text="${#temporals.format(producto.fechaVencimiento, 'dd/MM/yyyy')}"
+                                      th:class="${#temporals.daysBetween(#temporals.createNow(), producto.fechaVencimiento) < 30 ? 'text-danger fw-bold' : ''}">
+                                    Fecha
+                                </span>
+                                <span th:unless="${producto.fechaVencimiento}" class="text-muted">N/A</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-primary" 
+                                            th:onclick="'editarProducto(' + ${producto.id} + ')'"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info" 
+                                            th:onclick="'verMovimientos(' + ${producto.id} + ')'"
+                                            title="Ver Movimientos">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-success" 
+                                            th:onclick="'agregarStock(' + ${producto.id} + ')'"
+                                            title="Agregar Stock">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" 
+                                            th:onclick="'eliminarProducto(' + ${producto.id} + ')'"
+                                            title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+        <button class="fab" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal" title="Nuevo Producto">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
                                         <div th:class="${producto.categoria == 'MEDICAMENTO'} ? 'avatar-sm bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
                                                      ${producto.categoria == 'VACUNA'} ? 'avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
                                                      'avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2'">
@@ -317,7 +859,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/inventario}" method="post" id="formNuevoProducto">
+                <form th:action="@{/web/inventario}" method="post" id="formNuevoProducto">
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -399,7 +941,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/inventario/movimiento}" method="post">
+                <form th:action="@{/web/inventario/movimiento}" method="post">
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12">
@@ -508,20 +1050,34 @@
         }
 
         function cargarEstadisticas() {
-            fetch('/api/inventario/estadisticas')
+            // Use real inventory statistics from reportes endpoint
+            fetch('/reportes/inventario-stats')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('totalProductos').textContent = data.total || 0;
-                    document.getElementById('stockBajo').textContent = data.stockBajo || 0;
-                    document.getElementById('porVencer').textContent = data.porVencer || 0;
+                    document.getElementById('totalProductos').textContent = data.totalProductos || 0;
+                    document.getElementById('stockBajo').textContent = data.productosSinStock || 0;
+                    document.getElementById('porVencer').textContent = '0'; // Not available in current API
                     document.getElementById('valorTotal').textContent = '$' + (data.valorTotal || 0).toFixed(2);
                 })
-                .catch(error => console.error('Error al cargar estadísticas:', error));
+                .catch(error => {
+                    console.error('Error al cargar estadísticas:', error);
+                    // Fallback values
+                    document.getElementById('totalProductos').textContent = '0';
+                    document.getElementById('stockBajo').textContent = '0';
+                    document.getElementById('porVencer').textContent = '0';
+                    document.getElementById('valorTotal').textContent = '$0.00';
+                });
         }
 
         function verProducto(id) {
-            fetch(`/api/inventario/${id}`)
-                .then(response => response.json())
+            // Try to fetch product details from productos endpoint
+            fetch(`/productos/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Producto no encontrado');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const content = `
                         <div class="row">
@@ -614,5 +1170,489 @@
             font-family: 'Courier New', monospace;
         }
     </style>
+
+    <!-- Modal Nuevo/Editar Producto -->
+    <div class="modal fade" id="nuevoProductoModal" tabindex="-1" aria-labelledby="nuevoProductoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="nuevoProductoModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i>Nuevo Producto
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productoForm">
+                        <input type="hidden" id="productoId" name="id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="codigoProducto" class="form-label">
+                                    <i class="fas fa-barcode me-1"></i>Código
+                                </label>
+                                <input type="text" class="form-control form-control-custom" id="codigoProducto" name="codigo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nombreProducto" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>Nombre del Producto
+                                </label>
+                                <input type="text" class="form-control form-control-custom" id="nombreProducto" name="nombre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="categoriaProducto" class="form-label">
+                                    <i class="fas fa-layer-group me-1"></i>Categoría
+                                </label>
+                                <select class="form-select form-control-custom" id="categoriaProducto" name="categoria" required>
+                                    <option value="">Seleccionar categoría...</option>
+                                    <option value="MEDICAMENTO">Medicamentos</option>
+                                    <option value="VACUNA">Vacunas</option>
+                                    <option value="ALIMENTO">Alimentos</option>
+                                    <option value="ACCESORIO">Accesorios</option>
+                                    <option value="HIGIENE">Higiene</option>
+                                    <option value="INSTRUMENTAL">Instrumental</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="precioProducto" class="form-label">
+                                    <i class="fas fa-dollar-sign me-1"></i>Precio
+                                </label>
+                                <input type="number" step="0.01" class="form-control form-control-custom" id="precioProducto" name="precio" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="stockActual" class="form-label">
+                                    <i class="fas fa-boxes me-1"></i>Stock Actual
+                                </label>
+                                <input type="number" class="form-control form-control-custom" id="stockActual" name="cantidadStock" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="stockMinimo" class="form-label">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Stock Mínimo
+                                </label>
+                                <input type="number" class="form-control form-control-custom" id="stockMinimo" name="stockMinimo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fechaVencimiento" class="form-label">
+                                    <i class="fas fa-calendar-times me-1"></i>Fecha de Vencimiento
+                                </label>
+                                <input type="date" class="form-control form-control-custom" id="fechaVencimiento" name="fechaVencimiento">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="estadoProducto" class="form-label">
+                                    <i class="fas fa-info-circle me-1"></i>Estado
+                                </label>
+                                <select class="form-select form-control-custom" id="estadoProducto" name="estado">
+                                    <option value="ACTIVO">Activo</option>
+                                    <option value="INACTIVO">Inactivo</option>
+                                    <option value="DESCONTINUADO">Descontinuado</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="descripcionProducto" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>Descripción
+                                </label>
+                                <textarea class="form-control form-control-custom" id="descripcionProducto" name="descripcion" rows="3" 
+                                         placeholder="Descripción detallada del producto..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" form="productoForm" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar Producto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Movimiento de Inventario -->
+    <div class="modal fade" id="movimientoModal" tabindex="-1" aria-labelledby="movimientoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="movimientoModalLabel">
+                        <i class="fas fa-exchange-alt me-2"></i>Movimiento de Inventario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="movimientoForm">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="productoMovimiento" class="form-label">
+                                    <i class="fas fa-box me-1"></i>Producto
+                                </label>
+                                <select class="form-select form-control-custom" id="productoMovimiento" name="productoId" required>
+                                    <option value="">Seleccionar producto...</option>
+                                    <option th:each="producto : ${productos}" 
+                                            th:value="${producto.id}" 
+                                            th:text="${producto.nombre + ' (' + producto.codigo + ')'}">Producto</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="tipoMovimiento" class="form-label">
+                                    <i class="fas fa-arrows-alt me-1"></i>Tipo de Movimiento
+                                </label>
+                                <select class="form-select form-control-custom" id="tipoMovimiento" name="tipo" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    <option value="ENTRADA">Entrada</option>
+                                    <option value="SALIDA">Salida</option>
+                                    <option value="AJUSTE">Ajuste</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cantidadMovimiento" class="form-label">
+                                    <i class="fas fa-hashtag me-1"></i>Cantidad
+                                </label>
+                                <input type="number" class="form-control form-control-custom" id="cantidadMovimiento" name="cantidad" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="motivoMovimiento" class="form-label">
+                                    <i class="fas fa-comment me-1"></i>Motivo
+                                </label>
+                                <textarea class="form-control form-control-custom" id="motivoMovimiento" name="motivo" rows="3" 
+                                         placeholder="Motivo del movimiento..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" form="movimientoForm" class="btn btn-info">
+                        <i class="fas fa-check me-1"></i>Registrar Movimiento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating background elements -->
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable with modern styling
+            $('#inventarioTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                pageLength: 10,
+                order: [[1, 'asc']],
+                responsive: true,
+                dom: 'rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                drawCallback: function() {
+                    $('.dataTables_wrapper tbody tr').addClass('fade-in');
+                }
+            });
+
+            // Enhanced search functionality
+            $('#searchInput').on('keyup', function() {
+                $('#inventarioTable').DataTable().search(this.value).draw();
+            });
+
+            // Load statistics with animation
+            loadStatistics();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(loadStatistics, 300000);
+
+            // Clear modal on close
+            $('#nuevoProductoModal').on('hidden.bs.modal', function() {
+                $('#productoForm')[0].reset();
+                $('#productoId').val('');
+                $('#nuevoProductoModalLabel').html('<i class="fas fa-plus-circle me-2"></i>Nuevo Producto');
+            });
+
+            $('#movimientoModal').on('hidden.bs.modal', function() {
+                $('#movimientoForm')[0].reset();
+            });
+        });
+
+        function editarProducto(id) {
+            // Load product data and show modal
+            $.get('/productos/' + id, function(data) {
+                $('#productoId').val(data.id);
+                $('#codigoProducto').val(data.codigo);
+                $('#nombreProducto').val(data.nombre);
+                $('#categoriaProducto').val(data.categoria);
+                $('#precioProducto').val(data.precio);
+                $('#stockActual').val(data.cantidadStock);
+                $('#stockMinimo').val(data.stockMinimo);
+                $('#fechaVencimiento').val(data.fechaVencimiento);
+                $('#estadoProducto').val(data.estado);
+                $('#descripcionProducto').val(data.descripcion);
+                $('#nuevoProductoModalLabel').html('<i class="fas fa-edit me-2"></i>Editar Producto');
+                $('#nuevoProductoModal').modal('show');
+            }).fail(function() {
+                Swal.fire('Error', 'No se pudo cargar la información del producto', 'error');
+            });
+        }
+
+        function verMovimientos(id) {
+            Swal.fire({
+                title: 'Historial de Movimientos',
+                text: 'Cargando historial del producto...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            $.get('/inventario/' + id + '/movimientos', function(data) {
+                let html = '<div class="table-responsive"><table class="table table-sm">';
+                html += '<thead><tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th></tr></thead><tbody>';
+                
+                data.forEach(function(mov) {
+                    html += `<tr>
+                        <td>${new Date(mov.fecha).toLocaleDateString()}</td>
+                        <td><span class="badge ${mov.tipo === 'ENTRADA' ? 'bg-success' : mov.tipo === 'SALIDA' ? 'bg-danger' : 'bg-warning'}">${mov.tipo}</span></td>
+                        <td>${mov.cantidad}</td>
+                        <td>${mov.motivo || 'N/A'}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table></div>';
+                
+                Swal.fire({
+                    title: 'Historial de Movimientos',
+                    html: html,
+                    width: '800px',
+                    confirmButtonColor: 'var(--vet-primary)'
+                });
+            }).fail(function() {
+                Swal.fire('Error', 'No se pudo cargar el historial de movimientos', 'error');
+            });
+        }
+
+        function agregarStock(id) {
+            Swal.fire({
+                title: 'Agregar Stock',
+                html: `
+                    <input id="cantidadAgregar" class="swal2-input" placeholder="Cantidad a agregar" type="number" min="1">
+                    <textarea id="motivoAgregar" class="swal2-textarea" placeholder="Motivo (opcional)"></textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Agregar Stock',
+                confirmButtonColor: 'var(--vet-primary)',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const cantidad = document.getElementById('cantidadAgregar').value;
+                    const motivo = document.getElementById('motivoAgregar').value;
+                    
+                    if (!cantidad || cantidad <= 0) {
+                        Swal.showValidationMessage('Por favor ingresa una cantidad válida');
+                        return false;
+                    }
+                    
+                    return { cantidad: cantidad, motivo: motivo };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/inventario/' + id + '/stock', {
+                        cantidad: result.value.cantidad,
+                        motivo: result.value.motivo || 'Reabastecimiento manual'
+                    }, function() {
+                        Swal.fire('¡Éxito!', 'Stock agregado correctamente', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    }).fail(function() {
+                        Swal.fire('Error', 'No se pudo agregar el stock', 'error');
+                    });
+                }
+            });
+        }
+
+        function eliminarProducto(id) {
+            Swal.fire({
+                title: '¿Eliminar producto?',
+                text: '¿Estás seguro de que quieres eliminar este producto?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-trash me-1"></i>Sí, eliminar',
+                cancelButtonText: '<i class="fas fa-times me-1"></i>Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/productos/' + id,
+                        method: 'DELETE',
+                        success: function() {
+                            Swal.fire('¡Eliminado!', 'El producto ha sido eliminado.', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        },
+                        error: function() {
+                            Swal.fire('Error', 'No se pudo eliminar el producto', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function loadStatistics() {
+            $.get('/reportes/inventario-stats', function(data) {
+                animateValue('.stat-number', data.totalProductos || 0, 0);
+                animateValue('.stat-number', data.productosStockBajo || 0, 1);
+                animateValue('.stat-number', data.productosAgotados || 0, 2);
+                // For currency, update directly
+                $('.stat-number').eq(3).text('$' + (data.valorTotalInventario || 0).toLocaleString());
+            }).fail(function() {
+                console.log('Could not load statistics');
+            });
+        }
+
+        function animateValue(selector, endValue, index) {
+            const element = $(selector).eq(index);
+            const startValue = parseInt(element.text()) || 0;
+            const duration = 1000;
+            const startTime = Date.now();
+            
+            function update() {
+                const now = Date.now();
+                const progress = Math.min((now - startTime) / duration, 1);
+                const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
+                element.text(currentValue);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            update();
+        }
+
+        function aplicarFiltros() {
+            const categoria = $('#filtroCategoria').val();
+            const stock = $('#filtroStock').val();
+            const estado = $('#filtroEstado').val();
+            
+            let filtros = [];
+            if (categoria) filtros.push(`categoria:${categoria}`);
+            if (stock) filtros.push(`stock:${stock}`);
+            if (estado) filtros.push(`estado:${estado}`);
+            
+            if (filtros.length > 0) {
+                $('#inventarioTable').DataTable().search(filtros.join(' ')).draw();
+            } else {
+                $('#inventarioTable').DataTable().search('').draw();
+            }
+        }
+
+        function limpiarFiltros() {
+            $('#filtroCategoria').val('');
+            $('#filtroStock').val('');
+            $('#filtroEstado').val('');
+            $('#searchInput').val('');
+            $('#inventarioTable').DataTable().search('').draw();
+        }
+
+        // Enhanced form submissions
+        $('#productoForm').on('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const productoId = $('#productoId').val();
+            
+            Swal.fire({
+                title: 'Guardando...',
+                text: 'Por favor espera mientras se procesa el producto',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const url = productoId ? '/productos/' + productoId : '/productos';
+            const method = productoId ? 'PUT' : 'POST';
+            
+            $.ajax({
+                url: url,
+                method: method,
+                data: Object.fromEntries(formData),
+                success: function() {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: productoId ? 'Producto actualizado correctamente' : 'Producto creado correctamente',
+                        icon: 'success',
+                        confirmButtonColor: 'var(--vet-primary)'
+                    });
+                    $('#nuevoProductoModal').modal('hide');
+                    setTimeout(() => location.reload(), 1500);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || 'Ha ocurrido un error al procesar el producto',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            });
+        });
+
+        $('#movimientoForm').on('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            Swal.fire({
+                title: 'Registrando movimiento...',
+                text: 'Por favor espera',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            $.ajax({
+                url: '/inventario/movimientos',
+                method: 'POST',
+                data: Object.fromEntries(formData),
+                success: function() {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: 'Movimiento registrado correctamente',
+                        icon: 'success',
+                        confirmButtonColor: 'var(--vet-primary)'
+                    });
+                    $('#movimientoModal').modal('hide');
+                    setTimeout(() => location.reload(), 1500);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || 'Ha ocurrido un error al registrar el movimiento',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            });
+        });
+
+        // Add custom styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>

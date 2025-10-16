@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/reportes")
+@RequestMapping("/reportes")
 @CrossOrigin(origins = "*")
 public class ReporteController {
 

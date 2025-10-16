@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/citas")
+@RequestMapping("/citas")
 @CrossOrigin(origins = "*")
 public class CitaController {
 

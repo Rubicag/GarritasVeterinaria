@@ -1,179 +1,1136 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-    <head>
-        <title>Citas - Garritas Veterinaria</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
-    </head>
-    <body class="container py-4">
-        <h1 class="mb-4">Citas</h1>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Citas - Garritas Veterinaria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --vet-primary: #10b981;
+            --vet-secondary: #059669;
+            --vet-accent: #34d399;
+            --vet-dark: #064e3b;
+            --vet-light: #d1fae5;
+            --vet-gradient: linear-gradient(135deg, #10b981, #059669);
+            --vet-gradient-soft: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            --shadow-soft: 0 2px 15px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 4px 25px rgba(0, 0, 0, 0.12);
+            --shadow-strong: 0 8px 35px rgba(0, 0, 0, 0.15);
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-        <div class="row">
-            <div class="col-md-6">
-                <h3>Nueva cita</h3>
-                
-                <!-- Mensajes de éxito o error -->
-                <div th:if="${param.success}" class="alert alert-success">
-                    Cita creada exitosamente
-                </div>
-                <div th:if="${param.error}" class="alert alert-danger">
-                    Error: <span th:text="${param.error}"></span>
-                </div>
-                
-                <form id="citaForm" th:action="@{/citas}" method="post">
-                    <div class="mb-3">
-                        <label class="form-label">Mascota</label>
-                        <select class="form-select" name="mascotaId" required>
-                            <option value="">Seleccionar mascota...</option>
-                            <option th:each="m : ${mascotas}" th:value="${m.id}" th:text="${m.nombre + ' (' + m.especie + ')'}"></option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Servicio</label>
-                        <select class="form-select" name="servicioId" required>
-                            <option value="">Seleccionar servicio...</option>
-                            <option th:each="s : ${servicios}" th:value="${s.id}" th:text="${s.nombre + ' - $' + s.precio}"></option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Fecha y hora</label>
-                        <input class="form-control" type="datetime-local" name="fecha" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Observaciones</label>
-                        <textarea class="form-control" name="observaciones" rows="3"></textarea>
-                    </div>
-                    <button class="btn btn-primary" type="submit">Crear cita</button>
-                    <button class="btn btn-secondary" type="button" onclick="cargarCitasAPI()">Recargar con API</button>
-                </form>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Modern Navigation */
+        .navbar {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary)) !important;
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(10px);
+            border: none;
+            padding: 1rem 0;
+        }
+
+        /* Main Container */
+        .main-container {
+            margin-top: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Page Header */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .page-title {
+            background: var(--vet-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .page-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* Statistics Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--vet-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-strong);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            background: var(--vet-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--vet-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        /* Today's Appointments */
+        .today-appointments {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+        }
+
+        .appointment-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            transition: var(--transition);
+        }
+
+        .appointment-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-strong);
+        }
+
+        .appointment-time {
+            background: var(--vet-gradient);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        /* Content Card */
+        .content-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            padding: 1.5rem 2rem;
+            border: none;
+            font-weight: 600;
+        }
+
+        /* Search Container */
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            padding-left: 3rem;
+            border-radius: 25px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 1.2rem;
+        }
+
+        /* Table Styling */
+        .table-custom {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            background: white;
+        }
+
+        .table-custom thead th {
+            background: linear-gradient(135deg, var(--vet-primary), var(--vet-secondary));
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 1rem;
+        }
+
+        .table-custom tbody tr {
+            transition: var(--transition);
+            border: none;
+        }
+
+        .table-custom tbody tr:hover {
+            background: var(--vet-gradient-soft);
+            transform: scale(1.02);
+        }
+
+        .table-custom tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: rgba(16, 185, 129, 0.1);
+        }
+
+        /* Badges */
+        .badge-custom {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .badge-pendiente { background: #fef3c7; color: #92400e; }
+        .badge-confirmada { background: #d1fae5; color: #065f46; }
+        .badge-completada { background: #dbeafe; color: #1e3a8a; }
+        .badge-cancelada { background: #fee2e2; color: #991b1b; }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        /* Floating Action Button */
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .fab {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--vet-gradient);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-strong);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 40px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Button Styling */
+        .btn-primary-custom {
+            background: var(--vet-gradient);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: var(--transition);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            background: linear-gradient(135deg, var(--vet-secondary), var(--vet-dark));
+        }
+
+        /* Form Controls */
+        .form-control-custom {
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--vet-primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        /* Animations */
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            top: 40%;
+            right: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .stats-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .floating-action {
+                bottom: 1rem;
+                right: 1rem;
+            }
+
+            .fab {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/web/dashboard">
+                <i class="fas fa-paw me-2"></i>Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/dashboard">
+                            <i class="fas fa-chart-line me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/mascotas">
+                            <i class="fas fa-paw me-1"></i>Mascotas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/web/citas">
+                            <i class="fas fa-calendar-alt me-1"></i>Citas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/inventario">
+                            <i class="fas fa-boxes me-1"></i>Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/reportes">
+                            <i class="fas fa-chart-bar me-1"></i>Reportes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/historial">
+                            <i class="fas fa-history me-1"></i>Historial
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/usuarios">
+                            <i class="fas fa-users me-1"></i>Usuarios
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span th:text="${#authentication.name}">Usuario</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                            <li><a class="dropdown-item" href="/configuracion"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
+        </div>
+    </nav>
 
-            <div class="col-md-6">
-                <h3>Listado de citas</h3>
-                <table class="table table-striped" id="citasTable">
+    <!-- Main Content -->
+    <div class="container main-container">
+        <!-- Header Section -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-calendar-alt"></i>
+                Gestión de Citas
+            </h1>
+            <p class="page-subtitle">Programa y administra las citas veterinarias del día</p>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <i class="fas fa-calendar-day stat-icon"></i>
+                <div class="stat-number" th:text="${citasHoy ?: 0}">0</div>
+                <div class="stat-label">Citas Hoy</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-clock stat-icon"></i>
+                <div class="stat-number" th:text="${citasPendientes ?: 0}">0</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle stat-icon"></i>
+                <div class="stat-number" th:text="${citasConfirmadas ?: 0}">0</div>
+                <div class="stat-label">Confirmadas</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-user-check stat-icon"></i>
+                <div class="stat-number" th:text="${citasCompletadas ?: 0}">0</div>
+                <div class="stat-label">Completadas</div>
+            </div>
+        </div>
+        
+        <!-- Today's Appointments -->
+        <div class="today-appointments">
+            <h5 class="mb-3">
+                <i class="fas fa-calendar-day me-2"></i>
+                Citas de Hoy - <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">Fecha</span>
+            </h5>
+            <div class="row" th:if="${citasHoy != null and !citasHoy.isEmpty()}">
+                <div class="col-md-4 mb-3" th:each="cita : ${citasHoy}">
+                    <div class="appointment-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="appointment-time" th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">10:00</div>
+                            <span class="badge-custom" 
+                                  th:class="${cita.estado == 'PENDIENTE' ? 'badge-pendiente' : 
+                                            cita.estado == 'CONFIRMADA' ? 'badge-confirmada' : 
+                                            cita.estado == 'COMPLETADA' ? 'badge-completada' : 'badge-cancelada'}"
+                                  th:text="${cita.estado}">Estado</span>
+                        </div>
+                        <h6 class="fw-bold mb-1" th:text="${cita.mascota != null ? cita.mascota.nombre : 'Sin mascota'}">Mascota</h6>
+                        <p class="text-muted small mb-1" th:text="${cita.propietario != null ? cita.propietario.nombre : 'Sin propietario'}">Propietario</p>
+                        <p class="text-muted small mb-2" th:text="${cita.motivo ?: 'Consulta general'}">Motivo</p>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-primary" 
+                                    th:onclick="'editarCita(' + ${cita.id} + ')'"
+                                    title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-success" 
+                                    th:onclick="'confirmarCita(' + ${cita.id} + ')'"
+                                    title="Confirmar">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${citasHoy == null or citasHoy.isEmpty()}" class="text-center py-4">
+                <i class="fas fa-calendar-times display-4 text-muted mb-3"></i>
+                <h5 class="text-muted">No hay citas programadas para hoy</h5>
+                <p class="text-muted">¡Perfecto momento para programar nuevas citas!</p>
+            </div>
+        </div>
+        
+        <!-- Search Container -->
+        <div class="search-container">
+            <div class="position-relative">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="form-control search-input" placeholder="Buscar citas por mascota, propietario o fecha..." id="searchInput">
+            </div>
+        </div>
+
+        <!-- Main Content Card -->
+        <div class="content-card">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ul me-2"></i>
+                    Todas las Citas
+                </h5>
+                <button class="btn btn-primary-custom pulse-animation" data-bs-toggle="modal" data-bs-target="#citaModal">
+                    <i class="fas fa-plus me-2"></i>Nueva Cita
+                </button>
+            </div>
+            <div class="table-responsive p-3">
+                <table class="table table-custom" id="citasTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Fecha/Hora</th>
                             <th>Mascota</th>
-                            <th>Servicio</th>
-                            <th>Fecha</th>
-                            <th>Observaciones</th>
+                            <th>Propietario</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Veterinario</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="c : ${citas}">
-                            <td th:text="${c.id}"></td>
-                            <td th:text="${c.mascota?.nombre ?: 'No disponible'}"></td>
-                            <td th:text="${c.servicio?.nombre ?: 'No disponible'}"></td>
-                            <td th:text="${#temporals.format(c.fecha, 'dd/MM/yyyy HH:mm')}"></td>
-                            <td th:text="${c.observaciones}"></td>
+                        <tr th:each="cita : ${citas}">
                             <td>
-                                <button class="btn btn-sm btn-success" th:onclick="'confirmarCita(' + ${c.id} + ')'">
-                                    Confirmar
-                                </button>
+                                <div class="text-nowrap">
+                                    <strong th:text="${#temporals.format(cita.fechaHora, 'dd/MM/yyyy')}">Fecha</strong><br>
+                                    <small class="text-muted" th:text="${#temporals.format(cita.fechaHora, 'HH:mm')}">Hora</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong th:text="${cita.mascota != null ? cita.mascota.nombre : 'Sin asignar'}">Mascota</strong><br>
+                                    <small class="text-muted" th:text="${cita.mascota != null ? cita.mascota.especie : ''}">Especie</small>
+                                </div>
+                            </td>
+                            <td th:text="${cita.propietario != null ? cita.propietario.nombre : 'Sin asignar'}">Propietario</td>
+                            <td th:text="${cita.motivo ?: 'Consulta general'}">Motivo</td>
+                            <td>
+                                <span class="badge-custom" 
+                                      th:class="${cita.estado == 'PENDIENTE' ? 'badge-pendiente' : 
+                                                cita.estado == 'CONFIRMADA' ? 'badge-confirmada' : 
+                                                cita.estado == 'COMPLETADA' ? 'badge-completada' : 'badge-cancelada'}"
+                                      th:text="${cita.estado}">Estado</span>
+                            </td>
+                            <td th:text="${cita.veterinario != null ? cita.veterinario.nombre : 'Sin asignar'}">Veterinario</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-primary" 
+                                            th:onclick="'editarCita(' + ${cita.id} + ')'"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-success" 
+                                            th:onclick="'confirmarCita(' + ${cita.id} + ')'"
+                                            title="Confirmar">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-info" 
+                                            th:onclick="'verDetalles(' + ${cita.id} + ')'"
+                                            title="Ver Detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" 
+                                            th:onclick="'cancelarCita(' + ${cita.id} + ')'"
+                                            title="Cancelar">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 
-        <!-- JavaScript para mejorar la interactividad -->
-        <script>
-            // Cargar citas usando API REST
-            async function cargarCitasAPI() {
-                try {
-                    const response = await fetch('/api/citas');
-                    const citas = await response.json();
-                    
-                    const tbody = document.querySelector('#citasTable tbody');
-                    tbody.innerHTML = '';
-                    
-                    citas.forEach(cita => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${cita.id}</td>
-                            <td>${cita.mascota?.nombre || 'No disponible'}</td>
-                            <td>${cita.servicio?.nombre || 'No disponible'}</td>
-                            <td>${new Date(cita.fecha).toLocaleString()}</td>
-                            <td>${cita.observaciones || ''}</td>
-                            <td>
-                                <button class="btn btn-sm btn-success" onclick="confirmarCita(${cita.id})">
-                                    Confirmar
-                                </button>
-                            </td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                } catch (error) {
-                    console.error('Error al cargar citas:', error);
-                    alert('Error al cargar las citas');
-                }
-            }
-            
-            // Confirmar cita
-            async function confirmarCita(citaId) {
-                try {
-                    const response = await fetch(`/api/citas/${citaId}/confirmar`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        alert('Cita confirmada exitosamente');
-                        cargarCitasAPI();
-                    } else {
-                        alert('Error al confirmar la cita');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Error al confirmar la cita');
-                }
-            }
-            
-            // Crear cita usando API
-            document.getElementById('citaForm').addEventListener('submit', async function(e) {
-                const useAPI = confirm('¿Desea crear la cita usando la API REST?');
-                
-                if (useAPI) {
-                    e.preventDefault();
-                    
-                    const formData = new FormData(this);
-                    const citaData = {
-                        mascotaId: formData.get('mascotaId'),
-                        servicioId: formData.get('servicioId'),
-                        fecha: formData.get('fecha'),
-                        observaciones: formData.get('observaciones')
-                    };
-                    
-                    try {
-                        const response = await fetch('/api/citas', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(citaData)
-                        });
-                        
-                        if (response.ok) {
-                            alert('Cita creada exitosamente');
-                            this.reset();
-                            cargarCitasAPI();
-                        } else {
-                            const error = await response.json();
-                            alert('Error: ' + (error.error || 'Error desconocido'));
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('Error al crear la cita');
-                    }
+    <!-- Floating Action Button -->
+    <div class="floating-action">
+        <button class="fab" data-bs-toggle="modal" data-bs-target="#citaModal" title="Nueva Cita">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- Modal Nueva/Editar Cita -->
+    <div class="modal fade" id="citaModal" tabindex="-1" aria-labelledby="citaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="citaModalLabel">
+                        <i class="fas fa-calendar-plus me-2"></i>Nueva Cita
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="citaForm">
+                        <input type="hidden" id="citaId" name="id">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="propietarioSelect" class="form-label">
+                                    <i class="fas fa-user me-1"></i>Propietario
+                                </label>
+                                <select class="form-select form-control-custom" id="propietarioSelect" name="propietarioId" required>
+                                    <option value="">Seleccionar propietario...</option>
+                                    <option th:each="propietario : ${propietarios}" 
+                                            th:value="${propietario.id}" 
+                                            th:text="${propietario.nombre}">Propietario</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="mascotaSelect" class="form-label">
+                                    <i class="fas fa-paw me-1"></i>Mascota
+                                </label>
+                                <select class="form-select form-control-custom" id="mascotaSelect" name="mascotaId" required>
+                                    <option value="">Seleccionar mascota...</option>
+                                    <option th:each="mascota : ${mascotas}" 
+                                            th:value="${mascota.id}" 
+                                            th:text="${mascota.nombre + ' (' + mascota.especie + ')'}">Mascota</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fechaCita" class="form-label">
+                                    <i class="fas fa-calendar-day me-1"></i>Fecha
+                                </label>
+                                <input type="date" class="form-control form-control-custom" id="fechaCita" name="fecha" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="horaCita" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>Hora
+                                </label>
+                                <input type="time" class="form-control form-control-custom" id="horaCita" name="hora" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="veterinarioSelect" class="form-label">
+                                    <i class="fas fa-user-md me-1"></i>Veterinario
+                                </label>
+                                <select class="form-select form-control-custom" id="veterinarioSelect" name="veterinarioId" required>
+                                    <option value="">Seleccionar veterinario...</option>
+                                    <option th:each="veterinario : ${veterinarios}" 
+                                            th:value="${veterinario.id}" 
+                                            th:text="${veterinario.nombre}">Veterinario</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="estadoCita" class="form-label">
+                                    <i class="fas fa-info-circle me-1"></i>Estado
+                                </label>
+                                <select class="form-select form-control-custom" id="estadoCita" name="estado">
+                                    <option value="PENDIENTE">Pendiente</option>
+                                    <option value="CONFIRMADA">Confirmada</option>
+                                    <option value="COMPLETADA">Completada</option>
+                                    <option value="CANCELADA">Cancelada</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="motivoCita" class="form-label">
+                                    <i class="fas fa-notes-medical me-1"></i>Motivo de la Consulta
+                                </label>
+                                <textarea class="form-control form-control-custom" id="motivoCita" name="motivo" rows="3" 
+                                         placeholder="Describe el motivo de la consulta..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label for="observacionesCita" class="form-label">
+                                    <i class="fas fa-comment me-1"></i>Observaciones
+                                </label>
+                                <textarea class="form-control form-control-custom" id="observacionesCita" name="observaciones" rows="2" 
+                                         placeholder="Observaciones adicionales (opcional)..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </button>
+                    <button type="submit" form="citaForm" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar Cita
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Cita -->
+    <div class="modal fade" id="citaDetailsModal" tabindex="-1" aria-labelledby="citaDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="citaDetailsModalLabel">
+                        <i class="fas fa-eye me-2"></i>Detalles de la Cita
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-paw me-1"></i>Mascota
+                                </label>
+                                <p class="mb-0" id="detailMascota">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-user me-1"></i>Propietario
+                                </label>
+                                <p class="mb-0" id="detailPropietario">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-calendar-day me-1"></i>Fecha
+                                </label>
+                                <p class="mb-0" id="detailFecha">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-clock me-1"></i>Hora
+                                </label>
+                                <p class="mb-0" id="detailHora">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-user-md me-1"></i>Veterinario
+                                </label>
+                                <p class="mb-0" id="detailVeterinario">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Estado
+                                </label>
+                                <p class="mb-0" id="detailEstado">-</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-notes-medical me-1"></i>Motivo
+                                </label>
+                                <p class="mb-0" id="detailMotivo">-</p>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="info-item">
+                                <label class="fw-bold text-muted">
+                                    <i class="fas fa-comment me-1"></i>Observaciones
+                                </label>
+                                <p class="mb-0" id="detailObservaciones">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating background elements -->
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable with modern styling
+            $('#citasTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                },
+                pageLength: 10,
+                order: [[0, 'desc']],
+                responsive: true,
+                dom: 'rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                drawCallback: function() {
+                    // Add animation to table rows
+                    $('.dataTables_wrapper tbody tr').addClass('fade-in');
                 }
             });
-        </script>
 
-    </body>
+            // Enhanced search functionality
+            $('#searchInput').on('keyup', function() {
+                $('#citasTable').DataTable().search(this.value).draw();
+            });
+
+            // Load statistics with animation
+            loadStatistics();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(loadStatistics, 300000);
+
+            // Initialize today's date for new appointments
+            const today = new Date().toISOString().split('T')[0];
+            $('#fechaCita').val(today);
+
+            // Clear modal on close
+            $('#citaModal').on('hidden.bs.modal', function() {
+                $('#citaForm')[0].reset();
+                $('#citaId').val('');
+                $('#citaModalLabel').html('<i class="fas fa-calendar-plus me-2"></i>Nueva Cita');
+            });
+
+            // Add floating elements animation
+            createFloatingElements();
+        });
+
+        function editarCita(id) {
+            // Load appointment data and show modal
+            $.get('/citas/' + id, function(data) {
+                $('#citaId').val(data.id);
+                $('#propietarioSelect').val(data.propietarioId);
+                $('#mascotaSelect').val(data.mascotaId);
+                $('#fechaCita').val(data.fecha);
+                $('#horaCita').val(data.hora);
+                $('#motivoCita').val(data.motivo);
+                $('#observacionesCita').val(data.observaciones || '');
+                $('#veterinarioSelect').val(data.veterinarioId);
+                $('#estadoCita').val(data.estado);
+                $('#citaModalLabel').html('<i class="fas fa-edit me-2"></i>Editar Cita');
+                $('#citaModal').modal('show');
+            }).fail(function() {
+                Swal.fire('Error', 'No se pudo cargar la información de la cita', 'error');
+            });
+        }
+
+        function confirmarCita(id) {
+            Swal.fire({
+                title: '¿Confirmar cita?',
+                text: '¿Estás seguro de que quieres confirmar esta cita?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--vet-primary)',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-check me-1"></i>Sí, confirmar',
+                cancelButtonText: '<i class="fas fa-times me-1"></i>Cancelar',
+                customClass: {
+                    popup: 'swal-modern'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/citas/' + id + '/confirmar', function() {
+                        Swal.fire({
+                            title: '¡Confirmada!',
+                            text: 'La cita ha sido confirmada exitosamente.',
+                            icon: 'success',
+                            confirmButtonColor: 'var(--vet-primary)',
+                            customClass: {
+                                popup: 'swal-modern'
+                            }
+                        });
+                        setTimeout(() => location.reload(), 1500);
+                    }).fail(function() {
+                        Swal.fire('Error', 'No se pudo confirmar la cita', 'error');
+                    });
+                }
+            });
+        }
+
+        function verDetalles(id) {
+            $.get('/citas/' + id, function(data) {
+                $('#detailMascota').text(data.mascota || 'No especificado');
+                $('#detailPropietario').text(data.propietario || 'No especificado');
+                $('#detailFecha').text(data.fecha || 'No especificado');
+                $('#detailHora').text(data.hora || 'No especificado');
+                $('#detailMotivo').text(data.motivo || 'No especificado');
+                $('#detailObservaciones').text(data.observaciones || 'Sin observaciones');
+                $('#detailEstado').text(data.estado || 'No especificado');
+                $('#detailVeterinario').text(data.veterinario || 'No asignado');
+                $('#citaDetailsModal').modal('show');
+            }).fail(function() {
+                Swal.fire('Error', 'No se pudo cargar los detalles de la cita', 'error');
+            });
+        }
+
+        function cancelarCita(id) {
+            Swal.fire({
+                title: '¿Cancelar cita?',
+                text: '¿Estás seguro de que quieres cancelar esta cita?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: '<i class="fas fa-times me-1"></i>Sí, cancelar',
+                cancelButtonText: '<i class="fas fa-arrow-left me-1"></i>No cancelar',
+                customClass: {
+                    popup: 'swal-modern'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/citas/' + id + '/cancelar', function() {
+                        Swal.fire({
+                            title: '¡Cancelada!',
+                            text: 'La cita ha sido cancelada.',
+                            icon: 'success',
+                            confirmButtonColor: 'var(--vet-primary)',
+                            customClass: {
+                                popup: 'swal-modern'
+                            }
+                        });
+                        setTimeout(() => location.reload(), 1500);
+                    }).fail(function() {
+                        Swal.fire('Error', 'No se pudo cancelar la cita', 'error');
+                    });
+                }
+            });
+        }
+
+        function loadStatistics() {
+            $.get('/reportes/dashboard', function(data) {
+                // Animate counter updates
+                animateValue('.stat-number', data.citasHoy || 0, 0);
+                animateValue('.stat-number', data.citasPendientes || 0, 1);
+                animateValue('.stat-number', data.citasConfirmadas || 0, 2);
+                animateValue('.stat-number', data.citasCompletadas || 0, 3);
+            }).fail(function() {
+                console.log('Could not load statistics');
+            });
+        }
+
+        function animateValue(selector, endValue, index) {
+            const element = $(selector).eq(index);
+            const startValue = parseInt(element.text()) || 0;
+            const duration = 1000;
+            const startTime = Date.now();
+            
+            function update() {
+                const now = Date.now();
+                const progress = Math.min((now - startTime) / duration, 1);
+                const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
+                element.text(currentValue);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            update();
+        }
+
+        // Enhanced form submission
+        $('#citaForm').on('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const citaId = $('#citaId').val();
+            
+            // Show loading
+            Swal.fire({
+                title: 'Guardando...',
+                text: 'Por favor espera mientras se procesa la cita',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            const url = citaId ? '/citas/' + citaId : '/citas';
+            const method = citaId ? 'PUT' : 'POST';
+            
+            $.ajax({
+                url: url,
+                method: method,
+                data: Object.fromEntries(formData),
+                success: function() {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: citaId ? 'Cita actualizada correctamente' : 'Cita creada correctamente',
+                        icon: 'success',
+                        confirmButtonColor: 'var(--vet-primary)',
+                        customClass: {
+                            popup: 'swal-modern'
+                        }
+                    });
+                    $('#citaModal').modal('hide');
+                    setTimeout(() => location.reload(), 1500);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || 'Ha ocurrido un error al procesar la cita',
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            });
+        });
+
+        function createFloatingElements() {
+            const container = $('.floating-elements');
+            if (container.length) {
+                for (let i = 0; i < 3; i++) {
+                    const element = $('<div class="floating-element"></div>');
+                    container.append(element);
+                }
+            }
+        }
+
+        // Add custom CSS for SweetAlert
+        const style = document.createElement('style');
+        style.textContent = `
+            .swal-modern {
+                border-radius: 15px !important;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            }
+            .swal2-popup .swal2-title {
+                color: var(--vet-dark) !important;
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .info-item {
+                padding: 1rem;
+                background: rgba(16, 185, 129, 0.05);
+                border-radius: 8px;
+                margin-bottom: 1rem;
+            }
+            .info-item label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-size: 0.9rem;
+            }
+            .info-item p {
+                font-size: 1rem;
+                color: var(--vet-dark);
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
 </html>

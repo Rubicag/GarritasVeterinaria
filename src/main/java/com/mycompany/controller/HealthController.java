@@ -13,7 +13,7 @@ import java.util.Map;
  * Proporciona información sobre el estado de la aplicación y sus componentes
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/health")
 @CrossOrigin(origins = "*")
 public class HealthController {
 

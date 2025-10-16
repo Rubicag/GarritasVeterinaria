@@ -16,5 +16,13 @@ Any value defined here will override the pom.xml file value but is only applicab
         <org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_j2eeVersion>10-web</org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_j2eeVersion>
         <org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_deploy_2e_server>Tomcat</org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_deploy_2e_server>
         <org-netbeans-modules-maven-jaxws.rest_2e_config_2e_type>ide</org-netbeans-modules-maven-jaxws.rest_2e_config_2e_type>
+        <!-- JDK 24 Configuration -->
+        <org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_j2eeplatform>24</org-netbeans-modules-maven-j2ee.netbeans_2e_hint_2e_j2eeplatform>
+        <netbeans.hint.jdkPlatform>JDK_24</netbeans.hint.jdkPlatform>
+        <!-- NetBeans 25 Specific Settings -->
+        <org-netbeans-modules-maven-jaxws.rest_2e_config_2e_nb25>true</org-netbeans-modules-maven-jaxws.rest_2e_config_2e_nb25>
+        <!-- Spring Boot Development Settings -->
+        <org-netbeans-modules-maven-spring-boot.run_2e_jvmargs>-Xmx1024m -Xms256m -XX:+UseG1GC --add-opens=java.base/java.lang=ALL-UNNAMED</org-netbeans-modules-maven-spring-boot.run_2e_jvmargs>
+        <org-netbeans-modules-maven-spring-boot.run_2e_main_2e_class>com.mycompany.VeterinariaApplication</org-netbeans-modules-maven-spring-boot.run_2e_main_2e_class>
     </properties>
 </project-shared-configuration>

@@ -34,9 +34,9 @@ public class ReporteService {
         Optional<Reporte> reporteExistente = reporteRepository.findById(id);
         if (reporteExistente.isPresent()) {
             Reporte reporte = reporteExistente.get();
-            reporte.setTipoReporte(reporteDetails.getTipoReporte());
-            reporte.setContenido(reporteDetails.getContenido());
-            reporte.setIdUsuarioGenerador(reporteDetails.getIdUsuarioGenerador());
+            reporte.setTitulo(reporteDetails.getTitulo());
+            reporte.setDescripcion(reporteDetails.getDescripcion());
+            reporte.setIdUsuario(reporteDetails.getIdUsuario());
             return Optional.of(reporteRepository.save(reporte));
         }
         return Optional.empty();
@@ -50,12 +50,12 @@ public class ReporteService {
         return false;
     }
 
-    public List<Reporte> findByUsuarioGenerador(Long usuarioId) {
-        return reporteRepository.findByIdUsuarioGenerador(usuarioId);
+    public List<Reporte> findByUsuario(Long usuarioId) {
+        return reporteRepository.findByIdUsuario(usuarioId);
     }
 
-    public List<Reporte> findByTipoReporte(String tipoReporte) {
-        return reporteRepository.findByTipoReporte(tipoReporte);
+    public List<Reporte> findByTitulo(String titulo) {
+        return reporteRepository.findByTituloContainingIgnoreCase(titulo);
     }
 
     public List<Reporte> findByFechaBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin) {

@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 
@@ -29,26 +29,31 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Username y password son requeridos"));
             }
 
+            // Verificar si el usuario existe
+            Optional<Usuario> userOpt = usuarioService.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Usuario no encontrado"));
+            }
+
+            Usuario user = userOpt.get();
             boolean authenticated = usuarioService.authenticateUser(username, password);
             
             if (authenticated) {
-                Optional<Usuario> user = usuarioService.findByUsername(username);
-                if (user.isPresent()) {
-                    return ResponseEntity.ok(Map.of(
-                        "success", true,
-                        "message", "Autenticación exitosa",
-                        "user", Map.of(
-                            "id", user.get().getId(),
-                            "username", user.get().getUsuario(),
-                            "email", user.get().getCorreo(),
-                            "role", user.get().getRol() != null ? user.get().getRol().getNombre() : "USER"
-                        )
-                    ));
-                }
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Autenticación exitosa",
+                    "user", Map.of(
+                        "id", user.getId(),
+                        "username", user.getUsuario(),
+                        "email", user.getCorreo(),
+                        "role", user.getRol() != null ? user.getRol().getNombre() : "USER"
+                    )
+                ));
             }
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Credenciales inválidas"));
+                    .body(Map.of("error", "Contraseña incorrecta"));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

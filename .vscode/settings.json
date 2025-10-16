@@ -1,6 +1,8 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.configuration.updateBuildConfiguration": "automatic",
     "java.compile.nullAnalysis.mode": "automatic",
+    "java.eclipse.downloadSources": true,
+    "java.maven.downloadSources": true,
     "files.autoSave": "afterDelay",
     "files.autoGuessEncoding": false,
     "sqltools.connections": [
@@ -19,5 +21,6 @@
             "database": "garritas_veterinaria",
             "askForPassword": true
         }
-    ]
+    ],
+    "java.format.settings.url": ".vscode/java-formatter.xml"
 }

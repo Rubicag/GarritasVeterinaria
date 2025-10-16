@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
-@ConditionalOnProperty(name = "jwt.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "jwt.enabled", havingValue = "true", matchIfMissing = false)
 public class WebSecurityConfig {
 
     @Autowired
@@ -39,21 +39,25 @@ public class WebSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // Rutas públicas (sin autenticación)
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/api/reportes/**").permitAll() // Temporalmente público para pruebas
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/health/**").permitAll() // Health check
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 .requestMatchers("/", "/login", "/register", "/error").permitAll()
                 
-                // Rutas de API que requieren autenticación
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/veterinario/**").hasAnyRole("ADMIN", "VETERINARIO")
-                .requestMatchers("/api/**").authenticated()
+                // Rutas web HTML (temporalmente públicas para pruebas)
+                .requestMatchers("/dashboard").permitAll()
+                .requestMatchers("/web/**").permitAll()
+                .requestMatchers("/usuarios-web", "/mascotas-web").permitAll()
                 
-                // Rutas web que requieren autenticación
-                .requestMatchers("/dashboard", "/usuarios/**", "/mascotas/**").authenticated()
-                .requestMatchers("/citas/**", "/inventario/**", "/reportes/**").authenticated()
+                // Rutas de API que requieren autenticación (temporalmente públicas para pruebas)
+                .requestMatchers("/usuarios/**").permitAll()
+                .requestMatchers("/mascotas/**").permitAll()
+                .requestMatchers("/citas/**").permitAll()
+                .requestMatchers("/inventario/**").permitAll()
+                .requestMatchers("/productos/**").permitAll()
+                .requestMatchers("/servicios/**").permitAll()
+                .requestMatchers("/clinica/**").permitAll()
                 
                 // Cualquier otra petición requiere autenticación
                 .anyRequest().authenticated()

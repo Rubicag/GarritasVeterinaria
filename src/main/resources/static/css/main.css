@@ -1,0 +1,539 @@
+/* ========================================
+   GARRITAS VETERINARIA - MAIN STYLES
+   ======================================== */
+
+:root {
+    /* Colores principales */
+    --primary-color: #28a745;
+    --primary-dark: #20c997;
+    --secondary-color: #6c757d;
+    --accent-color: #007bff;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    
+    /* Colores de fondo */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-dark: #343a40;
+    
+    /* Gradientes */
+    --gradient-primary: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --gradient-secondary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-accent: linear-gradient(135deg, #007bff 0%, #6f42c1 100%);
+    --gradient-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    
+    /* Sombras */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+    --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+    
+    /* Transiciones */
+    --transition-fast: 0.2s ease-in-out;
+    --transition-normal: 0.3s ease-in-out;
+    --transition-slow: 0.5s ease-in-out;
+    
+    /* Border radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 50px;
+}
+
+/* Tema oscuro */
+[data-theme="dark"] {
+    --bg-primary: #2d3748;
+    --bg-secondary: #1a202c;
+    --bg-dark: #171923;
+    --text-primary: #ffffff;
+    --text-secondary: #a0aec0;
+}
+
+/* Reset y configuración base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background: var(--gradient-bg);
+    color: #2d3748;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Navegación mejorada */
+.navbar-veterinaria {
+    background: var(--gradient-primary);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(40, 167, 69, 0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: all var(--transition-normal);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    position: relative;
+    transition: all var(--transition-fast);
+    margin: 0 5px;
+    border-radius: var(--radius-md);
+    padding: 8px 16px !important;
+}
+
+.navbar-nav .nav-link:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+    background: rgba(255,255,255,0.2);
+    font-weight: 600;
+}
+
+/* Cards mejoradas */
+.card-veterinaria {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-normal);
+    overflow: hidden;
+}
+
+.card-veterinaria:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+}
+
+.card-header-veterinaria {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: 1.5rem 2rem;
+    font-weight: 600;
+    position: relative;
+}
+
+.card-header-veterinaria::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+}
+
+/* Estadísticas */
+.stat-card {
+    background: var(--gradient-secondary);
+    color: white;
+    border-radius: var(--radius-xl);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px) scale(1.02);
+}
+
+.stat-card.green {
+    background: var(--gradient-primary);
+}
+
+.stat-card.blue {
+    background: var(--gradient-accent);
+}
+
+.stat-card.orange {
+    background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);
+}
+
+.stat-card.purple {
+    background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Botones mejorados */
+.btn-veterinaria {
+    border-radius: var(--radius-full);
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-veterinaria::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-veterinaria:hover::before {
+    left: 100%;
+}
+
+.btn-primary-veterinaria {
+    background: var(--gradient-accent);
+}
+
+.btn-primary-veterinaria:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+}
+
+.btn-success-veterinaria {
+    background: var(--gradient-primary);
+}
+
+.btn-success-veterinaria:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+/* Formularios mejorados */
+.form-control-veterinaria {
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(10px);
+    transition: all var(--transition-fast);
+    font-size: 0.95rem;
+}
+
+.form-control-veterinaria:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.form-label-veterinaria {
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+/* Tabla mejorada */
+.table-veterinaria {
+    background: white;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.table-veterinaria thead th {
+    background: var(--gradient-secondary);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 18px 16px;
+    border: none;
+}
+
+.table-veterinaria tbody tr {
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-veterinaria tbody tr:hover {
+    background: rgba(40, 167, 69, 0.05);
+    transform: scale(1.01);
+}
+
+.table-veterinaria tbody td {
+    padding: 16px;
+    vertical-align: middle;
+    border: none;
+}
+
+/* Estados y badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-pendiente {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: white;
+}
+
+.status-confirmada {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.status-cancelada {
+    background: linear-gradient(135deg, #dc3545, #e83e8c);
+    color: white;
+}
+
+.status-atendida {
+    background: linear-gradient(135deg, #17a2b8, #007bff);
+    color: white;
+}
+
+/* Sidebar mejorado */
+.sidebar-veterinaria {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(0,0,0,0.05);
+    min-height: calc(100vh - 76px);
+    padding: 2rem 0;
+}
+
+.sidebar-veterinaria .nav-link {
+    color: #64748b;
+    padding: 14px 24px;
+    margin: 4px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.sidebar-veterinaria .nav-link:hover {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.sidebar-veterinaria .nav-link.active {
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 600;
+}
+
+.sidebar-veterinaria .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    background: white;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Botón flotante */
+.floating-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    border: none;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+    color: white;
+    font-size: 1.5rem;
+    z-index: 1000;
+    transition: all var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-btn:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 12px 35px rgba(40, 167, 69, 0.4);
+}
+
+/* Notificaciones */
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 2000;
+    transform: translateX(400px);
+    transition: transform var(--transition-normal);
+}
+
+.notification-toast.show {
+    transform: translateX(0);
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toggle tema */
+.theme-toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar-veterinaria {
+        display: none;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .floating-btn {
+        width: 56px;
+        height: 56px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .card-veterinaria {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Utilidades */
+.text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.glassmorphism {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.scroll-smooth {
+    scroll-behavior: smooth;
+}
+
+/* Mejoras para accesibilidad */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus states mejorados */
+*:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+button:focus,
+.btn:focus {
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25);
+}
