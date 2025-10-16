@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard - Garritas Veterinaria</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #18bc9c;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-bg: #ecf0f1;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            background: white;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+            transform: rotate(45deg) translate(-20%, -20%);
+        }
+        
+        .stat-card.users {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        .stat-card.pets {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .stat-card.appointments {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        
+        .stat-card.products {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+        
+        .stat-card.reports {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+        
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+        
+        .sidebar {
+            min-height: calc(100vh - 76px);
+            background: linear-gradient(180deg, #fff, #f8f9fa);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            padding: 20px 0;
+        }
+        
+        .sidebar .nav-link {
+            color: var(--primary-color);
+            padding: 15px 25px;
+            margin: 5px 15px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .sidebar .nav-link:hover::before {
+            left: 100%;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: linear-gradient(135deg, var(--secondary-color), #16a085);
+            color: white;
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(24, 188, 156, 0.3);
+        }
+        
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), #34495e);
+            color: white;
+            box-shadow: 0 8px 25px rgba(44, 62, 80, 0.3);
+        }
+        
+        .quick-action-btn {
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .activity-item {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-left: 4px solid var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:hover {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+            transform: translateX(5px);
+        }
+        
+        .welcome-message {
+            background: linear-gradient(135deg, rgba(24, 188, 156, 0.1), rgba(22, 160, 133, 0.1));
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 5px solid var(--secondary-color);
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--info-color));
+            border-radius: 2px;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/web/dashboard">
+                <i class="bi bi-heart-fill me-2"></i>Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>Usuario
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/login" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid" style="margin-top: 80px;">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar position-fixed" style="top:80px;left:0;height:calc(100vh - 80px);z-index:1040;width:220px;">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/web/dashboard">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/web/usuarios">
+                                <i class="bi bi-people me-2"></i>Usuarios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/web/citas">
+                                <i class="bi bi-calendar-event me-2"></i>Citas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/web/inventario">
+                                <i class="bi bi-box-seam me-2"></i>Inventario
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/web/historial">
+                                <i class="bi bi-clipboard-data me-2"></i>Historial
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/web/reportes">
+                                <i class="bi bi-graph-up me-2"></i>Reportes
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="margin-left:220px;">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-download me-1"></i>Exportar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Welcome Message -->
+                <div class="welcome-message">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">¡Bienvenido a Garritas Veterinaria! 🐾</h2>
+                            <p class="mb-0 text-muted">Gestiona tu clínica veterinaria de manera eficiente y profesional.</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="floating">
+                                <i class="bi bi-heart-fill text-danger" style="font-size: 3rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <h3 class="section-title">📊 Estadísticas Generales</h3>
+                <div class="row mb-4">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card users">
+                            <div class="card-body text-center position-relative">
+                                <i class="bi bi-people stat-icon"></i>
+                                <div class="stat-number" th:text="${totalUsuarios ?: 0}">0</div>
+                                <div class="stat-label">Usuarios</div>
+                                <div class="notification-badge" th:if="${totalUsuarios > 0}" th:text="${totalUsuarios}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card pets pulse">
+                            <div class="card-body text-center position-relative">
+                                <i class="bi bi-heart-fill stat-icon"></i>
+                                <div class="stat-number" th:text="${totalMascotas ?: 0}">0</div>
+                                <div class="stat-label">Mascotas</div>
+                                <div class="notification-badge" th:if="${totalMascotas > 0}" th:text="${totalMascotas}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card appointments">
+                            <div class="card-body text-center position-relative">
+                                <i class="bi bi-calendar-event stat-icon"></i>
+                                <div class="stat-number" th:text="${citasPendientes ?: 0}">0</div>
+                                <div class="stat-label">Citas Pendientes</div>
+                                <div class="notification-badge" th:if="${citasPendientes > 0}" th:text="${citasPendientes}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card products">
+                            <div class="card-body text-center position-relative">
+                                <i class="bi bi-box-seam stat-icon"></i>
+                                <div class="stat-number" th:text="${totalProductos ?: 0}">0</div>
+                                <div class="stat-label">Productos</div>
+                                <div class="notification-badge" th:if="${totalProductos > 0}" th:text="${totalProductos}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card reports">
+                            <div class="card-body text-center position-relative">
+                                <i class="bi bi-file-earmark-text stat-icon"></i>
+                                <div class="stat-number" th:text="${totalReportes ?: 0}">0</div>
+                                <div class="stat-label">Reportes</div>
+                                <div class="notification-badge" th:if="${totalReportes > 0}" th:text="${totalReportes}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="card stat-card" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24);">
+                            <div class="card-body text-center">
+                                <i class="bi bi-graph-up stat-icon"></i>
+                                <div class="stat-number">100%</div>
+                                <div class="stat-label">Sistema Activo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Species Breakdown -->
+                <div class="row mb-4" th:if="${mascotasInfo}">
+                    <div class="col-md-4 mb-3">
+                        <div class="card glass-effect">
+                            <div class="card-body text-center">
+                                <i class="bi bi-heart text-primary" style="font-size: 2.5rem;"></i>
+                                <h4 class="mt-2" th:text="${mascotasInfo.caninos ?: 0}">0</h4>
+                                <p class="text-muted mb-0">🐕 Caninos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card glass-effect">
+                            <div class="card-body text-center">
+                                <i class="bi bi-heart text-info" style="font-size: 2.5rem;"></i>
+                                <h4 class="mt-2" th:text="${mascotasInfo.felinos ?: 0}">0</h4>
+                                <p class="text-muted mb-0">🐱 Felinos</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card glass-effect">
+                            <div class="card-body text-center">
+                                <i class="bi bi-heart text-success" style="font-size: 2.5rem;"></i>
+                                <h4 class="mt-2" th:text="${mascotasInfo.otros ?: 0}">0</h4>
+                                <p class="text-muted mb-0">🐾 Otros</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h3 class="section-title">⚡ Acciones Rápidas</h3>
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/web/citas" class="btn btn-outline-primary quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="min-height: 120px;">
+                            <i class="bi bi-calendar-plus" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+                            <strong>Nueva Cita</strong>
+                            <small class="text-muted mt-1">Programar consulta</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/web/usuarios" class="btn btn-outline-success quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="min-height: 120px;">
+                            <i class="bi bi-person-plus-fill" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+                            <strong>Nuevo Cliente</strong>
+                            <small class="text-muted mt-1">Registrar propietario</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/web/mascotas" class="btn btn-outline-info quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="min-height: 120px;">
+                            <i class="bi bi-heart-pulse" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+                            <strong>Nueva Mascota</strong>
+                            <small class="text-muted mt-1">Registrar paciente</small>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/web/inventario" class="btn btn-outline-warning quick-action-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="min-height: 120px;">
+                            <i class="bi bi-boxes" style="font-size: 2.5rem; margin-bottom: 10px;"></i>
+                            <strong>Inventario</strong>
+                            <small class="text-muted mt-1">Gestionar productos</small>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Secondary Actions -->
+                <div class="row mb-4">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-2">
+                        <a href="/web/reportes" class="btn btn-outline-secondary quick-action-btn w-100">
+                            <i class="bi bi-graph-up me-2"></i>Reportes
+                                            <i class="bi bi-graph-up me-2"></i>Ver Reportes
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-clock-history me-2"></i>Actividad Reciente
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-calendar-check text-success me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1">Cita completada</h6>
+                                            <small class="text-muted">Consulta general para Firulais - Hace 2 horas</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-person-plus text-primary me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1">Nuevo cliente registrado</h6>
+                                            <small class="text-muted">María López se registró en el sistema - Hace 4 horas</small>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex align-items-center">
+                                        <i class="bi bi-box text-warning me-3"></i>
+                                        <div>
+                                            <h6 class="mb-1">Stock actualizado</h6>
+                                            <small class="text-muted">Alimento Premium - Stock bajo (5 unidades) - Hace 6 horas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Alertas
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="bi bi-box me-2"></i>
+                                    <strong>Stock Bajo:</strong> 3 productos necesitan reposición.
+                                </div>
+                                <div class="alert alert-info" role="alert">
+                                    <i class="bi bi-calendar-event me-2"></i>
+                                    <strong>Citas Hoy:</strong> 5 citas programadas para hoy.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem('user');
+            // Additional logout logic if needed
+        }
+
+        // Load user info from localStorage if available
+        const user = localStorage.getItem('user');
+        if (user) {
+            const userData = JSON.parse(user);
+            // Update navbar with user info if needed
+        }
+    </script>
+</body>
+</html>

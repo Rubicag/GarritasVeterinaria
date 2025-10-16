@@ -17,7 +17,10 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>21</java.version>
+        <java.version>24</java.version>
+        <maven.compiler.source>24</maven.compiler.source>
+        <maven.compiler.target>24</maven.compiler.target>
+        <maven.compiler.args>--enable-native-access=ALL-UNNAMED</maven.compiler.args>
     </properties>
 
     <dependencies>
@@ -67,11 +70,11 @@
             <scope>runtime</scope>
         </dependency>
         
-        <!-- MySQL connector for direct JDBC import/export utilities -->
+        <!-- MySQL connector para conexión con base de datos MySQL/MariaDB -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>8.1.0</version>
+            <version>8.0.33</version>
         </dependency>
         
         <!-- Spring Security -->
@@ -111,6 +114,28 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+        
+        <!-- Apache POI for Excel support -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.4</version>
+        </dependency>
+        
+        <!-- Jackson for JSON processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
     </dependencies>
     
     <build>
@@ -129,7 +154,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[21,)</version>
+                                    <version>[22,)</version>
                                 </requireJavaVersion>
                             </rules>
                             <fail>true</fail>
@@ -208,12 +233,20 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.2.5</version>
                 <configuration>
-                    <!-- Ensure JUnit Platform runs on the classpath (avoid module path issues on newer JDKs) -->
+                    <!-- Ensure JUnit Platform runs on the classpath (avoid module path issues on JDK 24) -->
                     <useModulePath>false</useModulePath>
-                    <!-- Increase forked process memory if needed; adjust later if CI requires it -->
-                    <argLine>${argLine}</argLine>
+                    <!-- Memory configuration for test execution - JDK 24 optimized -->
+                    <argLine>${argLine} -Xmx512m -Xms256m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=256m 
+                        --add-opens=java.base/java.lang=ALL-UNNAMED 
+                        --add-opens=java.base/java.util=ALL-UNNAMED
+                        --add-opens=java.base/java.text=ALL-UNNAMED</argLine>
+                    <!-- Fork configuration to prevent memory issues -->
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
+                    <!-- Timeout configuration -->
+                    <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
                 </configuration>
             </plugin>
         </plugins>

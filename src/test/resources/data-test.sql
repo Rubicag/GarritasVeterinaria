@@ -1,7 +1,5 @@
--- Script para tests usando H2
--- Inserta datos mínimos para pruebas
 
--- Roles
+
 INSERT INTO rol (id_rol, nombre, descripcion) VALUES 
 (1, 'ADMIN', 'Administrador del sistema'),
 (2, 'VETERINARIO', 'Médico veterinario'),
@@ -41,8 +39,7 @@ INSERT INTO historialclinico (id_historial, id_mascota, fecha, diagnostico, trat
 (2, 2, CURRENT_TIMESTAMP, 'Control de peso', 'Dieta balanceada recomendada', 'Seguimiento en 2 semanas'),
 (3, 1, CURRENT_TIMESTAMP, 'Consulta inicial', 'Examen físico completo', 'Primera visita - historial creado');
 
--- Reportes
-INSERT INTO reporte (id_reporte, tipo_reporte, fecha_generacion, contenido, id_usuario_generador) VALUES
-(1, 'CITAS_DIARIAS', CURRENT_TIMESTAMP, 'Reporte de citas programadas para hoy', 1),
-(2, 'INVENTARIO', CURRENT_TIMESTAMP, 'Estado actual del inventario de productos', 1),
-(3, 'INGRESOS_MENSUALES', CURRENT_TIMESTAMP, 'Resumen de ingresos del mes actual', 1);
+INSERT INTO reporte (id_reporte, titulo, descripcion, fecha_generacion, id_usuario) VALUES
+(1, 'Citas Diarias', 'Reporte de citas programadas para hoy', CURRENT_TIMESTAMP, 1),
+(2, 'Inventario', 'Estado actual del inventario de productos', CURRENT_TIMESTAMP, 1),
+(3, 'Ingresos Mensuales', 'Resumen de ingresos del mes actual', CURRENT_TIMESTAMP, 1);

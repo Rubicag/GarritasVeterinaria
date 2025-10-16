@@ -12,24 +12,24 @@ import org.springframework.stereotype.Repository;
 public interface ReporteRepository extends JpaRepository<Reporte, Long> {
     
     // Buscar reportes por usuario generador
-    List<Reporte> findByIdUsuarioGenerador(Long idUsuarioGenerador);
+    List<Reporte> findByIdUsuario(Long idUsuario);
     
-    // Buscar reportes por tipo
-    List<Reporte> findByTipoReporte(String tipoReporte);
+    // Buscar reportes por título (contiene texto)
+    List<Reporte> findByTituloContainingIgnoreCase(String titulo);
     
     // Buscar reportes entre fechas
     List<Reporte> findByFechaGeneracionBetween(LocalDateTime fechaInicio, LocalDateTime fechaFin);
     
-    // Buscar reportes por contenido (contiene texto)
-    List<Reporte> findByContenidoContainingIgnoreCase(String texto);
+    // Buscar reportes por descripción (contiene texto)
+    List<Reporte> findByDescripcionContainingIgnoreCase(String texto);
     
     // Buscar reportes recientes (últimos N días)
     @Query("SELECT r FROM Reporte r WHERE r.fechaGeneracion >= :fechaDesde ORDER BY r.fechaGeneracion DESC")
     List<Reporte> findReportesRecientes(@Param("fechaDesde") LocalDateTime fechaDesde);
     
     // Contar reportes por usuario generador
-    @Query("SELECT COUNT(r) FROM Reporte r WHERE r.idUsuarioGenerador = :idUsuarioGenerador")
-    Long countByIdUsuarioGenerador(@Param("idUsuarioGenerador") Long idUsuarioGenerador);
+    @Query("SELECT COUNT(r) FROM Reporte r WHERE r.idUsuario = :idUsuario")
+    Long countByIdUsuario(@Param("idUsuario") Long idUsuario);
     
     // Buscar todos los reportes ordenados por fecha descendente
     @Query("SELECT r FROM Reporte r ORDER BY r.fechaGeneracion DESC")

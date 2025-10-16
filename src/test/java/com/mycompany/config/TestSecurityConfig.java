@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.core.annotation.Order;
 
 @TestConfiguration
 @EnableWebSecurity
@@ -16,12 +17,13 @@ public class TestSecurityConfig {
     @Bean
     @Primary
     public PasswordEncoder testPasswordEncoder() {
-        // Usar BCryptPasswordEncoder pero con configuración simple
-        return new BCryptPasswordEncoder();
+        // Configuración simple para tests
+        return new BCryptPasswordEncoder(4); // Usar menor complejidad para tests más rápidos
     }
 
     @Bean
     @Primary
+    @Order(1) // Asegurar que esta configuración tenga prioridad sobre la principal
     public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())

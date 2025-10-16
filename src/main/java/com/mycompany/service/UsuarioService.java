@@ -121,12 +121,39 @@ public class UsuarioService implements UserDetailsService {
 	}
 
 	public boolean authenticateUser(String username, String rawPassword) {
+		System.out.println("=== DEBUG AUTHENTICATION ===");
+		System.out.println("Username: " + username);
+		System.out.println("Raw Password: " + rawPassword);
+		
 		Optional<Usuario> user = usuarioRepository.findByUsuario(username);
 		if (user.isPresent()) {
-			return passwordEncoder.matches(rawPassword, user.get().getContrasena());
+			String storedPassword = user.get().getContrasena();
+			System.out.println("Stored Password: " + storedPassword);
+			
+			// TEMPORALMENTE: Usar solo texto plano hasta solucionar BCrypt
+			boolean equals = rawPassword.equals(storedPassword);
+			System.out.println("Plain text equals result: " + equals);
+			return equals;
+			
+			// TODO: Rehabilitar BCrypt cuando se solucione el problema
+			/*
+			if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+				boolean matches = passwordEncoder.matches(rawPassword, storedPassword);
+				System.out.println("BCrypt matches result: " + matches);
+				return matches;
+			} else {
+				boolean equals = rawPassword.equals(storedPassword);
+				System.out.println("Plain text equals result: " + equals);
+				return equals;
+			}
+			*/
+		} else {
+			System.out.println("User not found!");
 		}
 		return false;
 	}
+
+
 
 	public boolean changePassword(Long userId, String oldPassword, String newPassword) {
 		Optional<Usuario> user = usuarioRepository.findById(userId);

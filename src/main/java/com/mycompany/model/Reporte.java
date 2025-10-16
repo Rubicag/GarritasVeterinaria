@@ -22,33 +22,32 @@ public class Reporte {
 	@Column(name = "id_reporte")
 	private Long id;
 
-	@Column(name = "tipo_reporte")
-	private String tipoReporte;
+	private String titulo;
+
+	private String descripcion;
 
 	@Column(name = "fecha_generacion")
 	private LocalDateTime fechaGeneracion;
 
-	private String contenido;
-
-	@Column(name = "id_usuario_generador")
-	private Long idUsuarioGenerador;
+	@Column(name = "id_usuario")
+	private Long idUsuario;
 
 	public Reporte() {}
 
 	public Long getId() { return id; }
 	public void setId(Long id) { this.id = id; }
 	
-	public String getTipoReporte() { return tipoReporte; }
-	public void setTipoReporte(String tipoReporte) { this.tipoReporte = tipoReporte; }
+	public String getTitulo() { return titulo; }
+	public void setTitulo(String titulo) { this.titulo = titulo; }
+	
+	public String getDescripcion() { return descripcion; }
+	public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 	
 	public LocalDateTime getFechaGeneracion() { return fechaGeneracion; }
 	public void setFechaGeneracion(LocalDateTime fechaGeneracion) { this.fechaGeneracion = fechaGeneracion; }
 	
-	public String getContenido() { return contenido; }
-	public void setContenido(String contenido) { this.contenido = contenido; }
-	
-	public Long getIdUsuarioGenerador() { return idUsuarioGenerador; }
-	public void setIdUsuarioGenerador(Long idUsuarioGenerador) { this.idUsuarioGenerador = idUsuarioGenerador; }
+	public Long getIdUsuario() { return idUsuario; }
+	public void setIdUsuario(Long idUsuario) { this.idUsuario = idUsuario; }
 
 	@Override
 	public boolean equals(Object o) {
@@ -65,6 +64,6 @@ public class Reporte {
 
 	@Override
 	public String toString() {
-		return "Reporte{" + "id=" + id + ", tipoReporte=" + tipoReporte + ", idUsuarioGenerador=" + idUsuarioGenerador + '}';
+		return "Reporte{" + "id=" + id + ", titulo=" + titulo + ", idUsuario=" + idUsuario + '}';
 	}
 }

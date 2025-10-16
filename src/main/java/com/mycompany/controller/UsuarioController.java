@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/usuarios")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -25,15 +25,20 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
-    @GetMapping({"/", "", "/count"})
+    @GetMapping("/count")
     public Map<String, Integer> count() {
+        System.out.println("[INFO] Contando usuarios en el sistema...");
         int c = usuarioService.countUsers();
+        System.out.println("[DEBUG] Total de usuarios: " + c);
         return Map.of("count", c);
     }
 
     @GetMapping({"", "/", "/all"})
     public List<Usuario> all() {
-        return usuarioService.findAll();
+        System.out.println("[INFO] Obteniendo todos los usuarios...");
+        List<Usuario> usuarios = usuarioService.findAll();
+        System.out.println("[DEBUG] Usuarios obtenidos: " + usuarios.size());
+        return usuarios;
     }
 
     @GetMapping("/{id}")

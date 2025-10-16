@@ -21,13 +21,7 @@ import java.util.List;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.Objects;
-
-/**
- * Enum para el sexo de la mascota
- */
-enum Sexo {
-	Macho, Hembra
-}
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "mascota")
@@ -57,15 +51,18 @@ public class Mascota {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_usuario")
+	@JsonIgnore
 	private Usuario propietario;
 
 	// Mantenemos edad como campo calculado o adicional si es necesario
 	private Integer edad;
 
 	@OneToMany(mappedBy = "mascota", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonIgnore
 	private List<Cita> citas;
 
 	@OneToMany(mappedBy = "mascota", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JsonIgnore
 	private List<HistorialClinico> historialClinico;
 
 	public Mascota() {}

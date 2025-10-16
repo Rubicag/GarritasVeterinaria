@@ -14,6 +14,7 @@ import jakarta.persistence.EnumType;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "cita")
@@ -26,6 +27,7 @@ public class Cita {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mascota")
+    @JsonIgnore
     private Mascota mascota;
 
     @ManyToOne(fetch = FetchType.LAZY)

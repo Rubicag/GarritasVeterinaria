@@ -95,7 +95,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                         
-                        <form th:action="@{/login}" method="post" id="loginForm">
+                        <form id="loginForm">
                             <div class="mb-4">
                                 <label class="form-label fw-semibold">
                                     <i class="bi bi-person me-2"></i>Usuario
@@ -176,17 +176,84 @@
             }
         });
 
-        // Form validation
+        // Form validation and AJAX login
         document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Always prevent default form submission
+            
             const username = this.username.value.trim();
             const password = this.password.value.trim();
             
             if (!username || !password) {
-                e.preventDefault();
-                alert('Por favor, completa todos los campos requeridos.');
+                showAlert('Por favor, completa todos los campos requeridos.', 'danger');
                 return false;
             }
+
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Iniciando sesión...';
+            submitBtn.disabled = true;
+
+            // Make AJAX request to REST API
+            fetch('/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store user info in localStorage (optional)
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Show success message briefly, then redirect
+                    showAlert('¡Bienvenido! Redirigiendo al dashboard...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/web/dashboard';
+                    }, 1500);
+                } else {
+                    showAlert(data.error || 'Credenciales inválidas', 'danger');
+                    resetButton();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('Error de conexión. Inténtalo de nuevo.', 'danger');
+                resetButton();
+            });
+
+            function resetButton() {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         });
+
+        // Helper function to show alerts
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert alert at the beginning of the form
+            const form = document.getElementById('loginForm');
+            form.insertBefore(alertDiv, form.firstChild);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
 
         // Auto-focus on first input
         document.querySelector('input[name="username"]').focus();
