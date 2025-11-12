@@ -4,6 +4,8 @@
  */
 package com.mycompany.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.util.List;
 import java.util.Objects;
 import jakarta.persistence.Column;
@@ -20,6 +22,7 @@ import jakarta.persistence.FetchType;
 
 @Entity
 @Table(name = "usuario")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Usuario {
 
 	@Id

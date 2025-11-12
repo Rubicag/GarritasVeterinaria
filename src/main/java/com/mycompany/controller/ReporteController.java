@@ -2,13 +2,16 @@ package com.mycompany.controller;
 
 import com.mycompany.model.Cita;
 import com.mycompany.model.Mascota;
+import com.mycompany.model.MovimientoInventario;
 import com.mycompany.model.Producto;
 import com.mycompany.model.Servicio;
+import com.mycompany.repository.MovimientoInventarioRepository;
 import com.mycompany.service.CitaService;
 import com.mycompany.service.MascotaService;
 import com.mycompany.service.ProductoService;
 import com.mycompany.service.ServicioService;
 import com.mycompany.service.UsuarioService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -29,15 +32,18 @@ public class ReporteController {
     private final CitaService citaService;
     private final ProductoService productoService;
     private final ServicioService servicioService;
+    private final MovimientoInventarioRepository movimientoInventarioRepository;
 
     public ReporteController(UsuarioService usuarioService, MascotaService mascotaService,
                            CitaService citaService, ProductoService productoService,
-                           ServicioService servicioService) {
+                           ServicioService servicioService,
+                           MovimientoInventarioRepository movimientoInventarioRepository) {
         this.usuarioService = usuarioService;
         this.mascotaService = mascotaService;
         this.citaService = citaService;
         this.productoService = productoService;
         this.servicioService = servicioService;
+        this.movimientoInventarioRepository = movimientoInventarioRepository;
     }
 
     @GetMapping("/dashboard")
@@ -262,39 +268,85 @@ public class ReporteController {
 
     @GetMapping("/metricas")
     public ResponseEntity<?> getMetricas(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime hasta) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
         try {
             Map<String, Object> metricas = new HashMap<>();
             
-            // Métricas generales
-            metricas.put("totalUsuarios", usuarioService.countUsers());
-            metricas.put("totalMascotas", mascotaService.count());
-            metricas.put("totalProductos", productoService.findAll().size());
-            metricas.put("totalServicios", servicioService.findAll().size());
+            // Si no se especifican fechas, usar el mes actual
+            LocalDate fechaDesde = desde != null ? desde : LocalDate.now().withDayOfMonth(1);
+            LocalDate fechaHasta = hasta != null ? hasta : LocalDate.now();
             
             // Citas en el período especificado
-            List<Cita> citas = (desde != null && hasta != null) ? 
-                citaService.findByFechaBetween(desde, hasta) : 
-                citaService.listAll();
-            metricas.put("totalCitas", citas.size());
+            List<Cita> citas = citaService.findByFechaBetween(
+                fechaDesde.atStartOfDay(), 
+                fechaHasta.atTime(23, 59, 59)
+            );
             
-            // Ingresos estimados
+            // Total de consultas (citas) en el período
+            metricas.put("totalConsultas", citas.size());
+            
+            // Total de ingresos (solo citas atendidas)
             double ingresos = citas.stream()
-                    .filter(c -> c.getServicio() != null && c.getServicio().getPrecio() != null)
+                    .filter(c -> c.getEstado() == Cita.EstadoCita.Atendida
+                            && c.getServicio() != null 
+                            && c.getServicio().getPrecio() != null)
                     .mapToDouble(c -> c.getServicio().getPrecio())
                     .sum();
-            metricas.put("ingresosEstimados", ingresos);
+            metricas.put("totalIngresos", ingresos);
             
-            // Productos con bajo stock
-            metricas.put("productosConBajoStock", productoService.findProductosConBajoStock(5).size());
+            // Nuevas mascotas (mascotas únicas atendidas en el período)
+            long nuevasMascotas = citas.stream()
+                    .filter(c -> c.getMascota() != null)
+                    .map(c -> c.getMascota().getId())
+                    .distinct()
+                    .count();
+            metricas.put("nuevasMascotas", nuevasMascotas);
             
-            // Valor total del inventario
-            double valorInventario = productoService.findAll().stream()
-                    .mapToDouble(p -> (p.getPrecio() != null ? p.getPrecio() : 0.0) * 
-                                     (p.getStock() != null ? p.getStock() : 0))
+            // Tasa de ocupación (porcentaje de citas sobre capacidad máxima estimada)
+            // Asumimos capacidad de 10 citas por día
+            long diasPeriodo = java.time.temporal.ChronoUnit.DAYS.between(fechaDesde, fechaHasta) + 1;
+            long capacidadMaxima = diasPeriodo * 10;
+            double tasaOcupacion = capacidadMaxima > 0 ? (citas.size() * 100.0 / capacidadMaxima) : 0;
+            metricas.put("tasaOcupacion", Math.round(tasaOcupacion));
+            
+            // Calcular variaciones vs mes anterior
+            LocalDate mesAnteriorDesde = fechaDesde.minusMonths(1);
+            LocalDate mesAnteriorHasta = fechaHasta.minusMonths(1);
+            
+            List<Cita> citasMesAnterior = citaService.findByFechaBetween(
+                mesAnteriorDesde.atStartOfDay(),
+                mesAnteriorHasta.atTime(23, 59, 59)
+            );
+            
+            // Variación de consultas
+            int variacionConsultas = citasMesAnterior.size() > 0 
+                ? (int) Math.round(((citas.size() - citasMesAnterior.size()) * 100.0) / citasMesAnterior.size())
+                : 0;
+            metricas.put("variacionConsultas", variacionConsultas);
+            
+            // Variación de ingresos
+            double ingresosMesAnterior = citasMesAnterior.stream()
+                    .filter(c -> c.getEstado() == Cita.EstadoCita.Atendida
+                            && c.getServicio() != null 
+                            && c.getServicio().getPrecio() != null)
+                    .mapToDouble(c -> c.getServicio().getPrecio())
                     .sum();
-            metricas.put("valorInventario", valorInventario);
+            int variacionIngresos = ingresosMesAnterior > 0
+                ? (int) Math.round(((ingresos - ingresosMesAnterior) * 100.0) / ingresosMesAnterior)
+                : 0;
+            metricas.put("variacionIngresos", variacionIngresos);
+            
+            // Variación de mascotas atendidas
+            long mascotasMesAnterior = citasMesAnterior.stream()
+                    .filter(c -> c.getMascota() != null)
+                    .map(c -> c.getMascota().getId())
+                    .distinct()
+                    .count();
+            int variacionMascotas = mascotasMesAnterior > 0
+                ? (int) Math.round(((nuevasMascotas - mascotasMesAnterior) * 100.0) / mascotasMesAnterior)
+                : 0;
+            metricas.put("variacionMascotas", variacionMascotas);
             
             return ResponseEntity.ok(metricas);
         } catch (Exception e) {
@@ -305,16 +357,16 @@ public class ReporteController {
 
     @GetMapping("/consultas-tiempo")
     public ResponseEntity<?> getConsultasTiempo(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime hasta) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
         try {
             List<Cita> citas = (desde != null && hasta != null) ? 
-                citaService.findByFechaBetween(desde, hasta) : 
+                citaService.findByFechaBetween(desde.atStartOfDay(), hasta.atTime(23, 59, 59)) : 
                 citaService.listAll();
                 
             Map<String, Object> resultado = new HashMap<>();
             
-            // Agrupar citas por día
+            // Agrupar citas por día y calcular consultas e ingresos
             Map<String, Long> citasPorDia = citas.stream()
                     .filter(c -> c.getFecha() != null)
                     .collect(Collectors.groupingBy(
@@ -322,8 +374,34 @@ public class ReporteController {
                             Collectors.counting()
                     ));
             
-            resultado.put("labels", citasPorDia.keySet());
-            resultado.put("data", citasPorDia.values());
+            // Calcular ingresos por día (solo citas atendidas)
+            Map<String, Double> ingresosPorDia = citas.stream()
+                    .filter(c -> c.getFecha() != null 
+                            && c.getEstado() == Cita.EstadoCita.Atendida
+                            && c.getServicio() != null 
+                            && c.getServicio().getPrecio() != null)
+                    .collect(Collectors.groupingBy(
+                            c -> c.getFecha().toLocalDate().toString(),
+                            Collectors.summingDouble(c -> c.getServicio().getPrecio())
+                    ));
+            
+            // Ordenar las fechas
+            List<String> fechasOrdenadas = citasPorDia.keySet().stream()
+                    .sorted()
+                    .collect(Collectors.toList());
+            
+            // Crear arrays de consultas e ingresos en el mismo orden que las fechas
+            List<Long> consultasOrdenadas = fechasOrdenadas.stream()
+                    .map(fecha -> citasPorDia.getOrDefault(fecha, 0L))
+                    .collect(Collectors.toList());
+            
+            List<Double> ingresosOrdenados = fechasOrdenadas.stream()
+                    .map(fecha -> ingresosPorDia.getOrDefault(fecha, 0.0))
+                    .collect(Collectors.toList());
+            
+            resultado.put("fechas", fechasOrdenadas);
+            resultado.put("consultas", consultasOrdenadas);
+            resultado.put("ingresos", ingresosOrdenados);
             resultado.put("total", citas.size());
             
             return ResponseEntity.ok(resultado);
@@ -335,23 +413,59 @@ public class ReporteController {
 
     @GetMapping("/tipos-consulta")
     public ResponseEntity<?> getTiposConsulta(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime hasta) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
         try {
             List<Cita> citas = (desde != null && hasta != null) ? 
-                citaService.findByFechaBetween(desde, hasta) : 
+                citaService.findByFechaBetween(desde.atStartOfDay(), hasta.atTime(23, 59, 59)) : 
                 citaService.listAll();
                 
-            Map<String, Long> tiposConsulta = citas.stream()
-                    .filter(c -> c.getServicio() != null && c.getServicio().getNombre() != null)
-                    .collect(Collectors.groupingBy(
-                            c -> c.getServicio().getNombre(),
-                            Collectors.counting()
-                    ));
+            // Mapear servicios a categorías (basado en los 8 servicios reales de MySQL)
+            Map<String, Long> categorias = new HashMap<>();
+            categorias.put("CONSULTA_GENERAL", 0L);
+            categorias.put("CONSULTA_ESPECIALIZADA", 0L);
+            categorias.put("VACUNACION", 0L);
+            categorias.put("DESPARASITACION", 0L);
+            categorias.put("CIRUGIA", 0L);
+            categorias.put("RADIOGRAFIA", 0L);
+            categorias.put("BANO_CORTE", 0L);
+            categorias.put("LABORATORIO", 0L);
             
+            citas.stream()
+                    .filter(c -> c.getServicio() != null && c.getServicio().getNombre() != null)
+                    .forEach(c -> {
+                        String nombreServicio = c.getServicio().getNombre().toUpperCase();
+                        
+                        // Mapear servicios exactos de la base de datos
+                        if (nombreServicio.contains("CONSULTA GENERAL")) {
+                            categorias.put("CONSULTA_GENERAL", categorias.get("CONSULTA_GENERAL") + 1);
+                        } else if (nombreServicio.contains("CONSULTA ESPECIALIZADA")) {
+                            categorias.put("CONSULTA_ESPECIALIZADA", categorias.get("CONSULTA_ESPECIALIZADA") + 1);
+                        } else if (nombreServicio.contains("VACUN")) {
+                            categorias.put("VACUNACION", categorias.get("VACUNACION") + 1);
+                        } else if (nombreServicio.contains("DESPARASIT")) {
+                            categorias.put("DESPARASITACION", categorias.get("DESPARASITACION") + 1);
+                        } else if (nombreServicio.contains("CIRUG")) {
+                            categorias.put("CIRUGIA", categorias.get("CIRUGIA") + 1);
+                        } else if (nombreServicio.contains("RADIOGRAF")) {
+                            categorias.put("RADIOGRAFIA", categorias.get("RADIOGRAFIA") + 1);
+                        } else if (nombreServicio.contains("BAÑO") || nombreServicio.contains("CORTE")) {
+                            categorias.put("BANO_CORTE", categorias.get("BANO_CORTE") + 1);
+                        } else if (nombreServicio.contains("LABORATORIO") || nombreServicio.contains("ANALISIS")) {
+                            categorias.put("LABORATORIO", categorias.get("LABORATORIO") + 1);
+                        }
+                    });
+            
+            // Crear resultado con tipos específicos
             Map<String, Object> resultado = new HashMap<>();
-            resultado.put("labels", tiposConsulta.keySet());
-            resultado.put("data", tiposConsulta.values());
+            resultado.put("CONSULTA_GENERAL", categorias.get("CONSULTA_GENERAL"));
+            resultado.put("CONSULTA_ESPECIALIZADA", categorias.get("CONSULTA_ESPECIALIZADA"));
+            resultado.put("VACUNACION", categorias.get("VACUNACION"));
+            resultado.put("DESPARASITACION", categorias.get("DESPARASITACION"));
+            resultado.put("CIRUGIA", categorias.get("CIRUGIA"));
+            resultado.put("RADIOGRAFIA", categorias.get("RADIOGRAFIA"));
+            resultado.put("BANO_CORTE", categorias.get("BANO_CORTE"));
+            resultado.put("LABORATORIO", categorias.get("LABORATORIO"));
             resultado.put("total", citas.size());
             
             return ResponseEntity.ok(resultado);
@@ -363,23 +477,27 @@ public class ReporteController {
 
     @GetMapping("/top-veterinarios")
     public ResponseEntity<?> getTopVeterinarios(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime hasta) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
         try {
             List<Cita> citas = (desde != null && hasta != null) ? 
-                citaService.findByFechaBetween(desde, hasta) : 
+                citaService.findByFechaBetween(desde.atStartOfDay(), hasta.atTime(23, 59, 59)) : 
                 citaService.listAll();
                 
-            // Simulamos veterinarios - en una implementación real tendrías una entidad Veterinario
+            // Agrupar por veterinario real
             Map<String, Long> veterinarios = citas.stream()
+                    .filter(c -> c.getVeterinario() != null && c.getVeterinario().getNombre() != null)
                     .collect(Collectors.groupingBy(
-                            c -> "Dr. " + (c.getId() % 5 == 0 ? "García" : 
-                                          c.getId() % 4 == 0 ? "Martínez" : 
-                                          c.getId() % 3 == 0 ? "López" : 
-                                          c.getId() % 2 == 0 ? "Rodríguez" : "Fernández"),
+                            c -> c.getVeterinario().getNombre(),
                             Collectors.counting()
                     ));
             
+            // Si no hay veterinarios asignados, retornar lista vacía
+            if (veterinarios.isEmpty()) {
+                return ResponseEntity.ok(List.of());
+            }
+            
+            // Ordenar por cantidad de consultas (descendente) y limitar a top 5
             List<Map<String, Object>> topVets = veterinarios.entrySet().stream()
                     .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                     .limit(5)
@@ -400,22 +518,28 @@ public class ReporteController {
 
     @GetMapping("/especies")
     public ResponseEntity<?> getEspecies(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime hasta) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
         try {
-            List<Mascota> mascotas = mascotaService.findAll();
+            // Obtener citas del período
+            List<Cita> citas = (desde != null && hasta != null) ? 
+                citaService.findByFechaBetween(desde.atStartOfDay(), hasta.atTime(23, 59, 59)) : 
+                citaService.listAll();
             
-            Map<String, Long> especies = mascotas.stream()
-                    .filter(m -> m.getEspecie() != null && !m.getEspecie().trim().isEmpty())
+            // Contar consultas por especie de mascota
+            Map<String, Long> especiesCount = citas.stream()
+                    .filter(c -> c.getMascota() != null 
+                            && c.getMascota().getEspecie() != null 
+                            && !c.getMascota().getEspecie().trim().isEmpty())
                     .collect(Collectors.groupingBy(
-                            Mascota::getEspecie,
+                            c -> c.getMascota().getEspecie(),
                             Collectors.counting()
                     ));
             
             Map<String, Object> resultado = new HashMap<>();
-            resultado.put("labels", especies.keySet());
-            resultado.put("data", especies.values());
-            resultado.put("total", mascotas.size());
+            resultado.put("especies", especiesCount.keySet());
+            resultado.put("consultas", especiesCount.values());
+            resultado.put("total", citas.size());
             
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
@@ -428,42 +552,47 @@ public class ReporteController {
     public ResponseEntity<?> getInventarioStats() {
         try {
             List<Producto> productos = productoService.findAll();
+            LocalDate hoy = LocalDate.now();
+            LocalDate dentroDe30Dias = hoy.plusDays(30);
             
             Map<String, Object> stats = new HashMap<>();
             
-            // Estadísticas básicas
-            stats.put("totalProductos", productos.size());
+            // Stock crítico (productos con stock bajo o sin stock)
+            int stockCritico = productoService.findProductosConBajoStock(5).size();
+            stats.put("stockCritico", stockCritico);
+            
+            // Productos por vencer en 30 días
+            int productosVencer = (int) productos.stream()
+                    .filter(p -> p.getFechaVencimiento() != null 
+                            && !p.getFechaVencimiento().isBefore(hoy)
+                            && !p.getFechaVencimiento().isAfter(dentroDe30Dias))
+                    .count();
+            stats.put("productosVencer", productosVencer);
             
             // Valor total del inventario
-            double valorTotal = productos.stream()
+            double valorInventario = productos.stream()
                     .mapToDouble(p -> (p.getPrecio() != null ? p.getPrecio() : 0.0) * 
                                      (p.getStock() != null ? p.getStock() : 0))
                     .sum();
-            stats.put("valorTotal", valorTotal);
+            stats.put("valorInventario", valorInventario);
             
-            // Productos con stock bajo
-            int bajoStock = productoService.findProductosConBajoStock(5).size();
-            stats.put("productosConBajoStock", bajoStock);
+            // Movimientos del mes actual (si existe la tabla movimiento_inventario)
+            try {
+                LocalDateTime inicioMes = hoy.withDayOfMonth(1).atStartOfDay();
+                LocalDateTime finMes = hoy.atTime(23, 59, 59);
+                long movimientosMes = movimientoInventarioRepository
+                        .findByFechaBetween(inicioMes, finMes)
+                        .size();
+                stats.put("movimientosMes", movimientosMes);
+            } catch (Exception e) {
+                stats.put("movimientosMes", 0);
+            }
             
-            // Productos sin stock
-            int sinStock = (int) productos.stream()
-                    .filter(p -> p.getStock() == null || p.getStock() == 0)
-                    .count();
-            stats.put("productosSinStock", sinStock);
-            
-            // Stock total
-            int stockTotal = productos.stream()
+            // Datos adicionales
+            stats.put("totalProductos", productos.size());
+            stats.put("stockTotal", productos.stream()
                     .mapToInt(p -> p.getStock() != null ? p.getStock() : 0)
-                    .sum();
-            stats.put("stockTotal", stockTotal);
-            
-            // Precio promedio
-            double precioPromedio = productos.stream()
-                    .filter(p -> p.getPrecio() != null)
-                    .mapToDouble(Producto::getPrecio)
-                    .average()
-                    .orElse(0.0);
-            stats.put("precioPromedio", precioPromedio);
+                    .sum());
             
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
@@ -477,19 +606,27 @@ public class ReporteController {
         try {
             List<Cita> citas = citaService.listAll();
             
-            Map<String, Double> ingresosPorMes = citas.stream()
-                    .filter(c -> c.getFecha() != null && c.getServicio() != null && c.getServicio().getPrecio() != null)
-                    .collect(Collectors.groupingBy(
-                            c -> c.getFecha().getYear() + "-" + String.format("%02d", c.getFecha().getMonthValue()),
-                            Collectors.summingDouble(c -> c.getServicio().getPrecio())
-                    ));
+            // Inicializar array de 12 meses con 0
+            double[] ingresosMensuales = new double[12];
+            
+            // Sumar ingresos por mes (solo del año actual)
+            int anioActual = LocalDate.now().getYear();
+            citas.stream()
+                    .filter(c -> c.getFecha() != null 
+                            && c.getFecha().getYear() == anioActual
+                            && c.getServicio() != null 
+                            && c.getServicio().getPrecio() != null
+                            && c.getEstado() != null 
+                            && c.getEstado() == Cita.EstadoCita.Atendida)
+                    .forEach(c -> {
+                        int mes = c.getFecha().getMonthValue() - 1; // 0-11
+                        ingresosMensuales[mes] += c.getServicio().getPrecio();
+                    });
             
             Map<String, Object> resultado = new HashMap<>();
-            resultado.put("labels", ingresosPorMes.keySet());
-            resultado.put("data", ingresosPorMes.values());
-            
-            double totalIngresos = ingresosPorMes.values().stream().mapToDouble(Double::doubleValue).sum();
-            resultado.put("total", totalIngresos);
+            resultado.put("ingresos", ingresosMensuales);
+            resultado.put("anio", anioActual);
+            resultado.put("total", java.util.Arrays.stream(ingresosMensuales).sum());
             
             return ResponseEntity.ok(resultado);
         } catch (Exception e) {
@@ -500,11 +637,11 @@ public class ReporteController {
 
     @GetMapping("/consultas-detalle")
     public ResponseEntity<?> getConsultasDetalle(
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime desde,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime hasta) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
         try {
             List<Cita> citas = (desde != null && hasta != null) ? 
-                citaService.findByFechaBetween(desde, hasta) : 
+                citaService.findByFechaBetween(desde.atStartOfDay(), hasta.atTime(23, 59, 59)) : 
                 citaService.listAll();
                 
             List<Map<String, Object>> consultas = citas.stream()
@@ -516,6 +653,7 @@ public class ReporteController {
                         consulta.put("dueno", cita.getMascota() != null && cita.getMascota().getPropietario() != null ? 
                                     cita.getMascota().getPropietario().getNombre() : "N/A");
                         consulta.put("servicio", cita.getServicio() != null ? cita.getServicio().getNombre() : "N/A");
+                        consulta.put("veterinario", cita.getVeterinario() != null ? cita.getVeterinario().getNombre() : "N/A");
                         consulta.put("precio", cita.getServicio() != null ? cita.getServicio().getPrecio() : 0.0);
                         consulta.put("estado", cita.getEstado() != null ? cita.getEstado() : "Pendiente");
                         return consulta;
@@ -530,6 +668,51 @@ public class ReporteController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Error al obtener consultas detalladas: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/movimientos-inventario")
+    public ResponseEntity<?> getMovimientosInventario(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate hasta) {
+        try {
+            // Convertir fechas a LocalDateTime para incluir todo el día
+            LocalDateTime fechaDesde = desde != null ? desde.atStartOfDay() : LocalDateTime.now().minusMonths(1);
+            LocalDateTime fechaHasta = hasta != null ? hasta.atTime(23, 59, 59) : LocalDateTime.now();
+            
+            // Consultar movimientos reales desde la base de datos
+            List<MovimientoInventario> movimientosDB = movimientoInventarioRepository
+                    .findByFechaBetween(fechaDesde, fechaHasta);
+            
+            // Convertir entidades a Maps para la respuesta JSON
+            List<Map<String, Object>> movimientos = movimientosDB.stream()
+                    .map(m -> {
+                        Map<String, Object> mov = new HashMap<>();
+                        mov.put("id", m.getId());
+                        mov.put("fecha", m.getFecha().toLocalDate().toString());
+                        mov.put("producto", m.getProducto() != null ? m.getProducto().getNombre() : "N/A");
+                        mov.put("tipo", m.getTipo().name());
+                        mov.put("cantidad", m.getCantidad());
+                        mov.put("stockAnterior", m.getStockAnterior());
+                        mov.put("stockActual", m.getStockActual());
+                        mov.put("motivo", m.getMotivo() != null ? m.getMotivo() : "");
+                        mov.put("usuario", m.getUsuario() != null ? m.getUsuario() : "N/A");
+                        return mov;
+                    })
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> resultado = new HashMap<>();
+            resultado.put("movimientos", movimientos);
+            resultado.put("total", movimientos.size());
+            resultado.put("periodo", Map.of(
+                    "desde", fechaDesde.toLocalDate().toString(),
+                    "hasta", fechaHasta.toLocalDate().toString()
+            ));
+            
+            return ResponseEntity.ok(resultado);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al obtener movimientos de inventario: " + e.getMessage()));
         }
     }
 

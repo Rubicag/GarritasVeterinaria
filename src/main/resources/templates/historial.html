@@ -221,22 +221,17 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td th:text="${registro.mascota.propietario.username}">Juan Pérez</td>
+                                <td th:text="${registro.mascota.propietario.usuario}">Juan Pérez</td>
                                 <td>
-                                    <span th:class="${registro.tipoConsulta == 'EMERGENCIA'} ? 'badge bg-danger' : 
-                                                   ${registro.tipoConsulta == 'CIRUGIA'} ? 'badge bg-warning' : 
-                                                   ${registro.tipoConsulta == 'VACUNACION'} ? 'badge bg-success' : 'badge bg-primary'"
-                                          th:text="${registro.tipoConsulta}">CONSULTA</span>
+                                    <span th:class="${registro.tipoConsulta == 'EMERGENCIA' ? 'badge bg-danger' : (registro.tipoConsulta == 'CIRUGIA' ? 'badge bg-warning' : (registro.tipoConsulta == 'VACUNACION' ? 'badge bg-success' : 'badge bg-primary'))}" th:text="${registro.tipoConsulta}">CONSULTA</span>
                                 </td>
-                                <td th:text="${registro.veterinario.username}">Dr. García</td>
+                                <td th:text="${registro.veterinario.usuario}">Dr. García</td>
                                 <td>
                                     <span th:text="${#strings.length(registro.diagnostico) > 50 ? #strings.substring(registro.diagnostico, 0, 50) + '...' : registro.diagnostico}"
                                           th:title="${registro.diagnostico}">Control de rutina...</span>
                                 </td>
                                 <td>
-                                    <span th:class="${registro.estado == 'COMPLETADO'} ? 'badge bg-success' : 
-                                                   ${registro.estado == 'PENDIENTE'} ? 'badge bg-warning' : 'badge bg-info'"
-                                          th:text="${registro.estado}">COMPLETADO</span>
+                                    <span th:class="${registro.estado == 'COMPLETADO' ? 'badge bg-success' : (registro.estado == 'PENDIENTE' ? 'badge bg-warning' : 'badge bg-info')}" th:text="${registro.estado}">COMPLETADO</span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
@@ -281,7 +276,7 @@
                                     <option value="">Seleccionar mascota...</option>
                                     <option th:each="mascota : ${mascotas}" 
                                             th:value="${mascota.id}" 
-                                            th:text="${mascota.nombre + ' - ' + mascota.propietario.username}">
+                                            th:text="${mascota.nombre + ' - ' + mascota.propietario.usuario}">
                                         Luna - Juan Pérez
                                     </option>
                                 </select>
@@ -292,7 +287,7 @@
                                     <option value="">Seleccionar veterinario...</option>
                                     <option th:each="vet : ${veterinarios}" 
                                             th:value="${vet.id}" 
-                                            th:text="${vet.username}">
+                                            th:text="${vet.usuario}">
                                         Dr. García
                                     </option>
                                 </select>
@@ -385,7 +380,7 @@
     <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
-    <script>
+    <script th:inline="none">
         $(document).ready(function() {
             // Inicializar DataTable
             const table = $('#tablaHistorial').DataTable({
@@ -454,7 +449,7 @@
                                     <tr><td><strong>Nombre:</strong></td><td>${data.mascota.nombre}</td></tr>
                                     <tr><td><strong>Especie:</strong></td><td>${data.mascota.especie}</td></tr>
                                     <tr><td><strong>Raza:</strong></td><td>${data.mascota.raza}</td></tr>
-                                    <tr><td><strong>Propietario:</strong></td><td>${data.mascota.propietario.username}</td></tr>
+                                    <tr><td><strong>Propietario:</strong></td><td>${data.mascota.propietario.usuario}</td></tr>
                                 </table>
                             </div>
                             <div class="col-md-6">
@@ -462,7 +457,7 @@
                                 <table class="table table-sm">
                                     <tr><td><strong>Fecha:</strong></td><td>${new Date(data.fechaConsulta).toLocaleString()}</td></tr>
                                     <tr><td><strong>Tipo:</strong></td><td><span class="badge bg-primary">${data.tipoConsulta}</span></td></tr>
-                                    <tr><td><strong>Veterinario:</strong></td><td>${data.veterinario.username}</td></tr>
+                                    <tr><td><strong>Veterinario:</strong></td><td>${data.veterinario.usuario}</td></tr>
                                     <tr><td><strong>Estado:</strong></td><td><span class="badge bg-success">${data.estado}</span></td></tr>
                                 </table>
                             </div>

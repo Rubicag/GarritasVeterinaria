@@ -19,5 +19,6 @@
             "database": "garritas_veterinaria",
             "askForPassword": true
         }
-    ]
+    ],
+    "java.debug.settings.onBuildFailureProceed": true
 }

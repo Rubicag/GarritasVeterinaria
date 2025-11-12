@@ -26,8 +26,22 @@ public class CitaController {
     public ResponseEntity<List<Cita>> list() { 
         try {
             List<Cita> citas = citaService.listAll();
+            // Forzar la inicialización de las relaciones lazy para evitar errores de serialización
+            citas.forEach(cita -> {
+                if (cita.getMascota() != null) {
+                    cita.getMascota().getNombre(); // Inicializar mascota
+                }
+                if (cita.getServicio() != null) {
+                    cita.getServicio().getNombre(); // Inicializar servicio
+                }
+                if (cita.getVeterinario() != null) {
+                    cita.getVeterinario().getNombre(); // Inicializar veterinario
+                }
+            });
             return ResponseEntity.ok(citas);
         } catch (Exception e) {
+            System.err.println("Error al listar citas: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

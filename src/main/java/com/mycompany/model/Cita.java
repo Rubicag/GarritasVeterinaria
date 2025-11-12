@@ -11,12 +11,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
 
 @Entity
 @Table(name = "cita")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Cita {
 
     @Id
@@ -26,14 +28,17 @@ public class Cita {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mascota")
+    @JsonIgnoreProperties({"citas", "propietario", "hibernateLazyInitializer", "handler"})
     private Mascota mascota;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_servicio")
+    @JsonIgnoreProperties({"citas", "hibernateLazyInitializer", "handler"})
     private Servicio servicio;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_veterinario")
+    @JsonIgnoreProperties({"citas", "password", "rol", "mascotas", "hibernateLazyInitializer", "handler"})
     private Usuario veterinario;
 
     private LocalDateTime fecha;

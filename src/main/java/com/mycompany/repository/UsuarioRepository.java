@@ -4,7 +4,9 @@
  */
 package com.mycompany.repository;
 
+import com.mycompany.model.Rol;
 import com.mycompany.model.Usuario;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -15,6 +17,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByCorreo(String correo);
     boolean existsByUsuario(String usuario);
     boolean existsByCorreo(String correo);
+    
+    // Buscar usuarios por rol
+    List<Usuario> findByRol(Rol rol);
     
     // Alias methods for compatibility
     default Optional<Usuario> findByUsername(String username) {

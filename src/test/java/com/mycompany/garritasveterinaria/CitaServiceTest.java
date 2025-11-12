@@ -3,9 +3,11 @@ package com.mycompany.garritasveterinaria;
 import com.mycompany.model.Cita;
 import com.mycompany.model.Mascota;
 import com.mycompany.model.Servicio;
+import com.mycompany.model.Usuario;
 import com.mycompany.repository.CitaRepository;
 import com.mycompany.repository.MascotaRepository;
 import com.mycompany.repository.ServicioRepository;
+import com.mycompany.repository.UsuarioRepository;
 import com.mycompany.service.CitaService;
 
 import org.junit.jupiter.api.Test;
@@ -40,15 +42,25 @@ public class CitaServiceTest {
     @Mock
     private ServicioRepository servicioRepository;
 
+    @Mock
+    private UsuarioRepository usuarioRepository;
+
     private CitaService citaService;
     private Cita sampleCita;
     private Mascota sampleMascota;
     private Servicio sampleServicio;
+    private Usuario sampleVeterinario;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        citaService = new CitaService(citaRepository, mascotaRepository, servicioRepository);
+        citaService = new CitaService(citaRepository, mascotaRepository, servicioRepository, usuarioRepository);
+        
+        // Crear veterinario de prueba
+        sampleVeterinario = new Usuario();
+        sampleVeterinario.setId(1L);
+        sampleVeterinario.setNombre("Dr. Pérez");
+        // No establecemos rol ya que es una entidad separada
         
         // Crear mascota de prueba
         sampleMascota = new Mascota();
@@ -68,6 +80,7 @@ public class CitaServiceTest {
         sampleCita.setFecha(LocalDateTime.now().plusDays(1));
         sampleCita.setMascota(sampleMascota);
         sampleCita.setServicio(sampleServicio);
+        sampleCita.setVeterinario(sampleVeterinario);
         sampleCita.setObservaciones("Cita de rutina");
     }
 
@@ -84,6 +97,7 @@ public class CitaServiceTest {
 
             when(mascotaRepository.findById(1L)).thenReturn(Optional.of(sampleMascota));
             when(servicioRepository.findById(1L)).thenReturn(Optional.of(sampleServicio));
+            when(usuarioRepository.findAll()).thenReturn(Arrays.asList(sampleVeterinario));
             when(citaRepository.findByMascota(sampleMascota)).thenReturn(Arrays.asList());
             when(citaRepository.save(any(Cita.class))).thenReturn(sampleCita);
 
@@ -308,6 +322,7 @@ public class CitaServiceTest {
 
             when(mascotaRepository.findById(1L)).thenReturn(Optional.of(sampleMascota));
             when(servicioRepository.findById(1L)).thenReturn(Optional.of(sampleServicio));
+            when(usuarioRepository.findAll()).thenReturn(Arrays.asList(sampleVeterinario));
             when(citaRepository.findByMascota(sampleMascota)).thenReturn(Arrays.asList(existingCita));
 
             assertThrows(RuntimeException.class, 

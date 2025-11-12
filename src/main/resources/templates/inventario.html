@@ -227,15 +227,21 @@
                         <tbody>
                             <tr th:each="producto : ${productos}">
                                 <td>
-                                    <span class="font-monospace fw-bold" th:text="${producto.codigo}">PRD001</span>
+                                    <span class="font-monospace fw-bold" th:text="${producto.id}">PRD001</span>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div th:class="${producto.categoria == 'MEDICAMENTO'} ? 'avatar-sm bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
-                                                     ${producto.categoria == 'VACUNA'} ? 'avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
-                                                     'avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2'">
-                                            <i th:class="${producto.categoria == 'MEDICAMENTO'} ? 'bi bi-capsule' : 
-                                                        ${producto.categoria == 'VACUNA'} ? 'bi bi-shield-check' : 'bi bi-box'"></i>
+                                        <div th:class="${producto.categoria == 'MEDICAMENTO' ? 'avatar-sm bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-2' : 
+                                                     (producto.categoria == 'HIGIENE' ? 'avatar-sm bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2' :
+                                                     (producto.categoria == 'ALIMENTO' ? 'avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2' :
+                                                     (producto.categoria == 'ACCESORIOS' ? 'avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2' :
+                                                     (producto.categoria == 'JUGUETES' ? 'avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2' :
+                                                     'avatar-sm bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2'))))}">
+                                            <i th:class="${producto.categoria == 'MEDICAMENTO' ? 'bi bi-capsule' : 
+                                                        (producto.categoria == 'HIGIENE' ? 'bi bi-droplet' :
+                                                        (producto.categoria == 'ALIMENTO' ? 'bi bi-egg' :
+                                                        (producto.categoria == 'ACCESORIOS' ? 'bi bi-gear' :
+                                                        (producto.categoria == 'JUGUETES' ? 'bi bi-puzzle' : 'bi bi-box'))))}"></i>
                                         </div>
                                         <div>
                                             <div class="fw-bold" th:text="${producto.nombre}">Amoxicilina 500mg</div>
@@ -244,40 +250,44 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span th:class="${producto.categoria == 'MEDICAMENTO'} ? 'badge bg-danger' : 
-                                                   ${producto.categoria == 'VACUNA'} ? 'badge bg-success' : 
-                                                   ${producto.categoria == 'ALIMENTO'} ? 'badge bg-warning' : 'badge bg-info'"
+                                    <span th:if="${producto.categoria != null}" 
+                                          th:class="${producto.categoria == 'MEDICAMENTO' ? 'badge bg-danger' : 
+                                                   (producto.categoria == 'HIGIENE' ? 'badge bg-info' : 
+                                                   (producto.categoria == 'ALIMENTO' ? 'badge bg-success' :
+                                                   (producto.categoria == 'ACCESORIOS' ? 'badge bg-warning' :
+                                                   (producto.categoria == 'JUGUETES' ? 'badge bg-primary' : 'badge bg-secondary'))))}"
                                           th:text="${producto.categoria}">MEDICAMENTO</span>
+                                    <span th:unless="${producto.categoria != null}" class="badge bg-secondary">Sin categoría</span>
                                 </td>
                                 <td>
-                                    <div class="d-flex flex-column">
-                                        <span th:class="${producto.stock <= producto.stockMinimo} ? 'fw-bold text-danger' : 
-                                                       ${producto.stock <= (producto.stockMinimo * 1.5)} ? 'fw-bold text-warning' : 'fw-bold text-success'"
-                                              th:text="${producto.stock}">50</span>
-                                        <small class="text-muted" th:text="'Min: ' + ${producto.stockMinimo}">Min: 10</small>
-                                    </div>
+                                    <span th:if="${producto.stock != null}" 
+                                          th:class="${producto.stock < 10 ? 'badge bg-danger' : (producto.stock < 20 ? 'badge bg-warning' : 'badge bg-success')}"
+                                          th:text="${producto.stock}">50</span>
+                                    <span th:unless="${producto.stock != null}" class="badge bg-secondary">N/A</span>
                                 </td>
                                 <td>
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(producto.precio, 0, 2)}">$25.00</span>
-                                        <small class="text-muted" th:text="'x ' + ${producto.unidadMedida}">x unidad</small>
-                                    </div>
+                                    <span th:if="${producto.precio != null}" 
+                                          class="fw-bold" 
+                                          th:text="'$' + ${#numbers.formatDecimal(producto.precio, 0, 2)}">$25.00</span>
+                                    <span th:unless="${producto.precio != null}" class="text-muted">N/A</span>
                                 </td>
-                                <td th:text="${producto.proveedor}">Laboratorio ABC</td>
+                                <td>
+                                    <span th:if="${producto.proveedor != null}" th:text="${producto.proveedor}">Laboratorio ABC</span>
+                                    <span th:unless="${producto.proveedor != null}" class="text-muted">-</span>
+                                </td>
                                 <td>
                                     <span th:if="${producto.fechaVencimiento != null}"
-                                          th:class="${#temporals.daysBetween(#temporals.createNow(), producto.fechaVencimiento) <= 30} ? 'badge bg-danger' : 
-                                                   ${#temporals.daysBetween(#temporals.createNow(), producto.fechaVencimiento) <= 90} ? 'badge bg-warning' : 'badge bg-success'"
+                                          th:with="diasRestantes=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), producto.fechaVencimiento)}"
+                                          th:class="${diasRestantes <= 30 ? 'badge bg-danger' : 
+                                                   (diasRestantes <= 90 ? 'badge bg-warning' : 'badge bg-success')}"
                                           th:text="${#temporals.format(producto.fechaVencimiento, 'dd/MM/yyyy')}">
                                         31/12/2025
                                     </span>
-                                    <span th:unless="${producto.fechaVencimiento != null}" class="badge bg-secondary">
-                                        N/A
-                                    </span>
+                                    <span th:unless="${producto.fechaVencimiento != null}" class="badge bg-secondary">N/A</span>
                                 </td>
                                 <td>
-                                    <span th:class="${producto.activo} ? 'badge bg-success' : 'badge bg-danger'"
-                                          th:text="${producto.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+                                    <span th:class="${producto.activo != null && producto.activo ? 'badge bg-success' : 'badge bg-danger'}"
+                                          th:text="${producto.activo != null && producto.activo ? 'Activo' : 'Inactivo'}">Activo</span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
@@ -408,7 +418,7 @@
                                     <option value="">Seleccionar producto...</option>
                                     <option th:each="producto : ${productos}" 
                                             th:value="${producto.id}" 
-                                            th:text="${producto.codigo + ' - ' + producto.nombre}">
+                                            th:text="${producto.id + ' - ' + producto.nombre}">
                                         PRD001 - Amoxicilina 500mg
                                     </option>
                                 </select>
@@ -468,7 +478,7 @@
     <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
-    <script>
+    <script th:inline="javascript">
         $(document).ready(function() {
             // Inicializar DataTable
             const table = $('#tablaInventario').DataTable({

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Garritas Veterinaria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .dashboard-card {
+            transition: transform 0.2s;
+            cursor: pointer;
+            height: 100%;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .stat-card {
+            border-left: 4px solid;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-paw"></i> Garritas Veterinaria
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard"><i class="fas fa-home"></i> Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/usuarios"><i class="fas fa-users"></i> Usuarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/citas"><i class="fas fa-calendar-alt"></i> Citas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/historial"><i class="fas fa-file-medical"></i> Historial</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventario"><i class="fas fa-boxes"></i> Inventario</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reportes"><i class="fas fa-chart-bar"></i> Reportes</a>
+                    </li>
+                    <li class="nav-item">
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-link nav-link text-white">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="mb-3">
+                    <i class="fas fa-tachometer-alt text-success"></i> Dashboard Principal
+                </h2>
+                <p class="text-muted">Bienvenido al sistema de gestión veterinaria</p>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Total Usuarios</h6>
+                                <h3 class="mb-0" th:text="${totalUsuarios != null ? totalUsuarios : '0'}">0</h3>
+                            </div>
+                            <div class="text-primary">
+                                <i class="fas fa-users fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Citas Hoy</h6>
+                                <h3 class="mb-0" th:text="${citasHoy != null ? citasHoy : '0'}">0</h3>
+                            </div>
+                            <div class="text-success">
+                                <i class="fas fa-calendar-check fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Mascotas Registradas</h6>
+                                <h3 class="mb-0" th:text="${totalMascotas != null ? totalMascotas : '0'}">0</h3>
+                            </div>
+                            <div class="text-warning">
+                                <i class="fas fa-paw fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stat-card border-info">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Productos en Stock</h6>
+                                <h3 class="mb-0" th:text="${totalProductos != null ? totalProductos : '0'}">0</h3>
+                            </div>
+                            <div class="text-info">
+                                <i class="fas fa-boxes fa-3x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Access Cards -->
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h4><i class="fas fa-bolt text-warning"></i> Acceso Rápido</h4>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card dashboard-card border-success" onclick="location.href='/usuarios'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-4x text-success mb-3"></i>
+                        <h5 class="card-title">Gestión de Usuarios</h5>
+                        <p class="card-text text-muted">Administrar clientes, veterinarios y personal</p>
+                        <a href="/usuarios" class="btn btn-success">
+                            <i class="fas fa-arrow-right"></i> Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card dashboard-card border-primary" onclick="location.href='/citas'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-alt fa-4x text-primary mb-3"></i>
+                        <h5 class="card-title">Gestión de Citas</h5>
+                        <p class="card-text text-muted">Programar y administrar citas veterinarias</p>
+                        <a href="/citas" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i> Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card dashboard-card border-warning" onclick="location.href='/inventario'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-boxes fa-4x text-warning mb-3"></i>
+                        <h5 class="card-title">Inventario</h5>
+                        <p class="card-text text-muted">Control de productos y suministros</p>
+                        <a href="/inventario" class="btn btn-warning">
+                            <i class="fas fa-arrow-right"></i> Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card dashboard-card border-info" onclick="location.href='/historial'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-medical fa-4x text-info mb-3"></i>
+                        <h5 class="card-title">Historial Clínico</h5>
+                        <p class="card-text text-muted">Consultar historial médico de mascotas</p>
+                        <a href="/historial" class="btn btn-info">
+                            <i class="fas fa-arrow-right"></i> Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card dashboard-card border-danger" onclick="location.href='/reportes'">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-bar fa-4x text-danger mb-3"></i>
+                        <h5 class="card-title">Reportes</h5>
+                        <p class="card-text text-muted">Generar y consultar reportes estadísticos</p>
+                        <a href="/reportes" class="btn btn-danger">
+                            <i class="fas fa-arrow-right"></i> Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

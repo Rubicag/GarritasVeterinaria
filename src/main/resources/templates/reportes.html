@@ -73,15 +73,15 @@
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Desde</label>
+                        <label for="fechaDesde" class="form-label">Fecha Desde</label>
                         <input type="date" class="form-control" id="fechaDesde">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Hasta</label>
+                        <label for="fechaHasta" class="form-label">Fecha Hasta</label>
                         <input type="date" class="form-control" id="fechaHasta">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Período</label>
+                        <label for="periodo" class="form-label">Período</label>
                         <select class="form-select" id="periodo" onchange="aplicarPeriodo()">
                             <option value="">Personalizado</option>
                             <option value="hoy">Hoy</option>
@@ -467,15 +467,18 @@
             chartTiposConsulta = new Chart(ctx2, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Consulta General', 'Vacunación', 'Cirugía', 'Emergencia', 'Control'],
+                    labels: ['Consulta General', 'Consulta Especializada', 'Vacunación', 'Desparasitación', 'Cirugía', 'Radiografía', 'Baño y Corte', 'Laboratorio'],
                     datasets: [{
-                        data: [0, 0, 0, 0, 0],
+                        data: [0, 0, 0, 0, 0, 0, 0, 0],
                         backgroundColor: [
-                            '#007bff',
-                            '#28a745',
-                            '#ffc107',
-                            '#dc3545',
-                            '#17a2b8'
+                            '#007bff',  // Consulta General - Azul
+                            '#6610f2',  // Consulta Especializada - Púrpura
+                            '#28a745',  // Vacunación - Verde
+                            '#20c997',  // Desparasitación - Verde azulado
+                            '#ffc107',  // Cirugía - Amarillo
+                            '#fd7e14',  // Radiografía - Naranja
+                            '#e83e8c',  // Baño y Corte - Rosa
+                            '#17a2b8'   // Laboratorio - Cian
                         ]
                     }]
                 },
@@ -581,11 +584,14 @@
                 .then(response => response.json())
                 .then(data => {
                     chartTiposConsulta.data.datasets[0].data = [
-                        data.CONSULTA || 0,
+                        data.CONSULTA_GENERAL || 0,
+                        data.CONSULTA_ESPECIALIZADA || 0,
                         data.VACUNACION || 0,
+                        data.DESPARASITACION || 0,
                         data.CIRUGIA || 0,
-                        data.EMERGENCIA || 0,
-                        data.CONTROL || 0
+                        data.RADIOGRAFIA || 0,
+                        data.BANO_CORTE || 0,
+                        data.LABORATORIO || 0
                     ];
                     chartTiposConsulta.update();
                 })
@@ -657,30 +663,93 @@
                 .then(response => response.json())
                 .then(data => {
                     let html = '';
-                    data.forEach(consulta => {
+                    const consultas = data.consultas || [];
+                    consultas.forEach(consulta => {
                         html += `
                             <tr>
-                                <td>${new Date(consulta.fechaConsulta).toLocaleDateString()}</td>
-                                <td>${consulta.mascota}</td>
-                                <td>${consulta.propietario}</td>
-                                <td><span class="badge bg-primary">${consulta.tipo}</span></td>
-                                <td>${consulta.veterinario}</td>
-                                <td>$${consulta.costo.toFixed(2)}</td>
-                                <td><span class="badge bg-success">${consulta.estado}</span></td>
+                                <td>${new Date(consulta.fecha).toLocaleDateString()}</td>
+                                <td>${consulta.mascota || 'N/A'}</td>
+                                <td>${consulta.dueno || 'N/A'}</td>
+                                <td><span class="badge bg-primary">${consulta.servicio || 'N/A'}</span></td>
+                                <td>${consulta.veterinario || 'N/A'}</td>
+                                <td>$${(consulta.precio || 0).toFixed(2)}</td>
+                                <td><span class="badge bg-success">${consulta.estado || 'Pendiente'}</span></td>
                             </tr>
                         `;
                     });
-                    document.querySelector('#tablaConsultas tbody').innerHTML = html;
+                    document.querySelector('#tablaConsultas tbody').innerHTML = html || '<tr><td colspan="7" class="text-center">No hay consultas en el período seleccionado</td></tr>';
                 })
-                .catch(error => console.error('Error al cargar tabla de consultas:', error));
+                .catch(error => {
+                    console.error('Error al cargar tabla de consultas:', error);
+                    document.querySelector('#tablaConsultas tbody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar datos</td></tr>';
+                });
         }
 
         function cargarTablaCitas(fechaDesde, fechaHasta) {
-            // Similar implementación para citas
+            fetch(`/api/reportes/consultas-detalle?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    const consultas = data.consultas || [];
+                    consultas.forEach(consulta => {
+                        // Determinar clase de badge según estado
+                        let estadoBadge = 'bg-secondary';
+                        if (consulta.estado === 'Atendida' || consulta.estado === 'Completada') {
+                            estadoBadge = 'bg-success';
+                        } else if (consulta.estado === 'Pendiente' || consulta.estado === 'Programada') {
+                            estadoBadge = 'bg-warning';
+                        } else if (consulta.estado === 'Cancelada') {
+                            estadoBadge = 'bg-danger';
+                        }
+                        
+                        html += `
+                            <tr>
+                                <td>${new Date(consulta.fecha).toLocaleDateString()}</td>
+                                <td>${consulta.fecha ? new Date(consulta.fecha).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : 'N/A'}</td>
+                                <td>${consulta.mascota || 'N/A'}</td>
+                                <td>${consulta.dueno || 'N/A'}</td>
+                                <td>${consulta.veterinario || 'N/A'}</td>
+                                <td><span class="badge ${estadoBadge}">${consulta.estado || 'Pendiente'}</span></td>
+                                <td>${consulta.servicio || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    document.querySelector('#tablaCitas tbody').innerHTML = html || '<tr><td colspan="7" class="text-center">No hay citas en el período seleccionado</td></tr>';
+                })
+                .catch(error => {
+                    console.error('Error al cargar tabla de citas:', error);
+                    document.querySelector('#tablaCitas tbody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar datos</td></tr>';
+                });
         }
 
         function cargarTablaMovimientos(fechaDesde, fechaHasta) {
-            // Similar implementación para movimientos de inventario
+            fetch(`/api/reportes/movimientos-inventario?desde=${fechaDesde}&hasta=${fechaHasta}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    const movimientos = data.movimientos || [];
+                    movimientos.forEach(mov => {
+                        // Determinar clase según tipo de movimiento
+                        let tipoBadge = mov.tipo === 'Entrada' ? 'bg-success' : 'bg-danger';
+                        
+                        html += `
+                            <tr>
+                                <td>${new Date(mov.fecha).toLocaleDateString()}</td>
+                                <td>${mov.producto || 'N/A'}</td>
+                                <td><span class="badge ${tipoBadge}">${mov.tipo || 'N/A'}</span></td>
+                                <td>${mov.cantidad || 0}</td>
+                                <td>${mov.stockAnterior || 0}</td>
+                                <td><strong>${mov.stockActual || 0}</strong></td>
+                                <td>${mov.motivo || 'N/A'}</td>
+                            </tr>
+                        `;
+                    });
+                    document.querySelector('#tablaMovimientos tbody').innerHTML = html || '<tr><td colspan="7" class="text-center">No hay movimientos en el período seleccionado</td></tr>';
+                })
+                .catch(error => {
+                    console.error('Error al cargar tabla de movimientos:', error);
+                    document.querySelector('#tablaMovimientos tbody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar datos</td></tr>';
+                });
         }
 
         function actualizarDatos() {

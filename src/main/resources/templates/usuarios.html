@@ -139,20 +139,18 @@
                                         <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
                                             <i class="bi bi-person-fill"></i>
                                         </div>
-                                        <span th:text="${usuario.username}">admin</span>
+                                        <span th:text="${usuario.usuario}">admin</span>
                                     </div>
                                 </td>
-                                <td th:text="${usuario.email}">admin@example.com</td>
+                                <td th:text="${usuario.correo}">admin@example.com</td>
                                 <td>
-                                    <span th:class="${usuario.role == 'ADMIN'} ? 'badge bg-danger' : 
-                                                   ${usuario.role == 'VETERINARIO'} ? 'badge bg-info' : 'badge bg-secondary'"
-                                          th:text="${usuario.role}">ADMIN</span>
+                                    <span th:class="'badge ' + ${usuario.rol != null and usuario.rol.nombre == 'ADMIN' ? 'bg-danger' : (usuario.rol != null and usuario.rol.nombre == 'VETERINARIO' ? 'bg-info' : 'bg-secondary')}"
+                                          th:text="${usuario.rol != null ? usuario.rol.nombre : 'Sin rol'}">ADMIN</span>
                                 </td>
                                 <td>
-                                    <span th:class="${usuario.active} ? 'badge bg-success' : 'badge bg-danger'"
-                                          th:text="${usuario.active} ? 'Activo' : 'Inactivo'">Activo</span>
+                                    <span class="badge bg-success">Activo</span>
                                 </td>
-                                <td th:text="${#temporals.format(usuario.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2025 10:00</td>
+                                <td>-</td>
                                 <td>
                                     <span class="badge bg-info" th:text="${usuario.mascotas != null ? usuario.mascotas.size() : 0}">0</span>
                                 </td>
@@ -166,8 +164,9 @@
                                                 th:onclick="'editarUsuario(' + ${usuario.id} + ')'">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger" title="Eliminar"
-                                                th:onclick="'eliminarUsuario(' + ${usuario.id} + ', \'' + ${usuario.username} + '\')'">
+                                        <button class="btn btn-outline-danger btn-eliminar" title="Eliminar"
+                                                th:data-usuario-id="${usuario.id}"
+                                                th:data-usuario-nombre="${usuario.usuario}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -195,15 +194,15 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Nombre de Usuario *</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <input type="text" class="form-control" name="usuario" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Email *</label>
-                                <input type="email" class="form-control" name="email" required>
+                                <label class="form-label">Correo Electrónico *</label>
+                                <input type="email" class="form-control" name="correo" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Contraseña *</label>
-                                <input type="password" class="form-control" name="password" required minlength="6">
+                                <input type="password" class="form-control" name="contrasena" required minlength="6">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Confirmar Contraseña *</label>
@@ -320,6 +319,7 @@
             fetch(`/api/usuarios/${id}`)
                 .then(response => response.json())
                 .then(data => {
+                    const rolNombre = data.rol ? data.rol.nombre : 'Sin rol';
                     const content = `
                         <div class="row">
                             <div class="col-sm-4"><strong>ID:</strong></div>
@@ -327,23 +327,27 @@
                         </div>
                         <div class="row mt-2">
                             <div class="col-sm-4"><strong>Usuario:</strong></div>
-                            <div class="col-sm-8">${data.username}</div>
+                            <div class="col-sm-8">${data.usuario}</div>
                         </div>
                         <div class="row mt-2">
-                            <div class="col-sm-4"><strong>Email:</strong></div>
-                            <div class="col-sm-8">${data.email}</div>
+                            <div class="col-sm-4"><strong>Correo:</strong></div>
+                            <div class="col-sm-8">${data.correo}</div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>Nombre:</strong></div>
+                            <div class="col-sm-8">${data.nombre} ${data.apellido}</div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-sm-4"><strong>DNI:</strong></div>
+                            <div class="col-sm-8">${data.dni}</div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-sm-4"><strong>Rol:</strong></div>
-                            <div class="col-sm-8"><span class="badge bg-info">${data.role}</span></div>
+                            <div class="col-sm-8"><span class="badge bg-info">${rolNombre}</span></div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-sm-4"><strong>Estado:</strong></div>
-                            <div class="col-sm-8"><span class="badge ${data.active ? 'bg-success' : 'bg-danger'}">${data.active ? 'Activo' : 'Inactivo'}</span></div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-sm-4"><strong>Registro:</strong></div>
-                            <div class="col-sm-8">${new Date(data.createdAt).toLocaleString()}</div>
+                            <div class="col-sm-8"><span class="badge bg-success">Activo</span></div>
                         </div>
                     `;
                     document.getElementById('detallesUsuario').innerHTML = content;
@@ -377,6 +381,17 @@
                 });
             }
         }
+
+        // Event listener para botones de eliminar
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-usuario-id');
+                    const nombre = this.getAttribute('data-usuario-nombre');
+                    eliminarUsuario(id, nombre);
+                });
+            });
+        });
     </script>
 
     <style>

@@ -3,9 +3,11 @@ package com.mycompany.service;
 import com.mycompany.model.Cita;
 import com.mycompany.model.Mascota;
 import com.mycompany.model.Servicio;
+import com.mycompany.model.Usuario;
 import com.mycompany.repository.CitaRepository;
 import com.mycompany.repository.MascotaRepository;
 import com.mycompany.repository.ServicioRepository;
+import com.mycompany.repository.UsuarioRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,11 +21,14 @@ public class CitaService {
     private final CitaRepository citaRepository;
     private final MascotaRepository mascotaRepository;
     private final ServicioRepository servicioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public CitaService(CitaRepository citaRepository, MascotaRepository mascotaRepository, ServicioRepository servicioRepository) {
+    public CitaService(CitaRepository citaRepository, MascotaRepository mascotaRepository, 
+                      ServicioRepository servicioRepository, UsuarioRepository usuarioRepository) {
         this.citaRepository = citaRepository;
         this.mascotaRepository = mascotaRepository;
         this.servicioRepository = servicioRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public List<Cita> listAll() { 
@@ -53,6 +58,26 @@ public class CitaService {
         c.setId(null);
         c.setMascota(mascota.get());
         c.setServicio(servicio.get());
+        
+        // Asignar veterinario si no está definido
+        if (c.getVeterinario() == null) {
+            // Buscar el primer usuario disponible como veterinario
+            List<Usuario> usuarios = usuarioRepository.findAll();
+            if (usuarios.isEmpty()) {
+                throw new RuntimeException("No hay usuarios disponibles en el sistema");
+            }
+            c.setVeterinario(usuarios.get(0));
+        }
+        
+        // Extraer la hora del LocalDateTime y asignarla al campo hora
+        if (c.getFecha() != null && c.getHora() == null) {
+            c.setHora(c.getFecha().toLocalTime());
+        }
+        
+        // Establecer estado inicial si no está definido
+        if (c.getEstado() == null) {
+            c.setEstado(Cita.EstadoCita.Pendiente);
+        }
         
         return citaRepository.save(c);
     }
