@@ -45,6 +45,45 @@ public class InventarioController {
         }
     }
 
+    // Endpoint adicional esperado por el frontend: /api/inventario/estadisticas
+    @GetMapping("/estadisticas")
+    public ResponseEntity<?> getEstadisticas() {
+        try {
+            List<Producto> productos = productoService.findAll();
+            int total = productos.size();
+            int stockBajo = productoService.findProductosConBajoStock(5).size();
+            java.time.LocalDate hoy = java.time.LocalDate.now();
+            int porVencer = (int) productos.stream()
+                    .filter(p -> p.getFechaVencimiento() != null)
+                    .filter(p -> !p.getFechaVencimiento().isBefore(hoy) && !p.getFechaVencimiento().isAfter(hoy.plusDays(30)))
+                    .count();
+            double valorTotal = productos.stream()
+                    .mapToDouble(p -> (p.getPrecio() != null ? p.getPrecio() : 0.0) * (p.getStock() != null ? p.getStock() : 0))
+                    .sum();
+
+            return ResponseEntity.ok(Map.of(
+                "total", total,
+                "stockBajo", stockBajo,
+                "porVencer", porVencer,
+                "valorTotal", valorTotal
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al obtener estadísticas"));
+        }
+    }
+
+    // Endpoint para obtener un producto por id (el frontend hace fetch('/api/inventario/{id}'))
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProductoById(@PathVariable Long id) {
+        try {
+            Optional<Producto> p = productoService.getById(id);
+            return p.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error al obtener producto"));
+        }
+    }
+
     @GetMapping("/bajo-stock")
     public ResponseEntity<List<Producto>> getProductosConBajoStock(@RequestParam(defaultValue = "5") Integer minimo) {
         try {

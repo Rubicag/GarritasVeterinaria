@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<div th:fragment="header">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-3">
+        <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" th:href="@{/}">
+                <span class="brand-logo rounded-circle d-inline-flex justify-content-center align-items-center me-2">
+                    <i class="fas fa-paw text-white"></i>
+                </span>
+                <span class="brand-text">Garritas <small class="text-muted">Veterinaria</small></span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="topNav">
+                <ul class="navbar-nav align-items-center ms-auto">
+                    <li class="nav-item d-flex align-items-center me-2">
+                        <button class="btn btn-sm btn-ghost d-flex align-items-center" id="darkModeToggle" type="button" title="Alternar modo oscuro">
+                            <i class="fas fa-moon me-2"></i>
+                            <span class="d-none d-md-inline">Dark</span>
+                        </button>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="/static/images/user-avatar.svg" alt="avatar" class="rounded-circle avatar-sm" width="32" height="32"/>
+                            <span class="ms-2 d-none d-md-inline">Mi Cuenta</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" th:href="@{/perfil}"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                            <li><a class="dropdown-item" th:href="@{/configuracion}"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" style="display:inline;margin:0;padding:0;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit" class="dropdown-item text-danger" style="border:none;background:transparent;padding:0;">
+                                        <i class="fas fa-right-from-bracket me-2"></i>Cerrar Sesión
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>

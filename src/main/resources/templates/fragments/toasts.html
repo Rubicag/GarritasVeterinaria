@@ -1,0 +1,70 @@
+<th:block th:fragment="toasts">
+    <!-- Container for dynamic toasts -->
+    <div id="toastsContainer" aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+        <!-- Example toast template (hidden) -->
+        <div id="toastTemplate" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" style="display:none;">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Notificación</strong>
+                <small class="text-muted">ahora</small>
+                <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+            </div>
+            <div class="toast-body" id="toastBody">Contenido</div>
+        </div>
+    </div>
+    <script>
+        // showToast: crea y muestra un toast bootstrap dinámicamente
+        function showToast(title, body, type) {
+            const container = document.getElementById('toastsContainer');
+            const template = document.getElementById('toastTemplate');
+            if (!container || !template) return;
+
+            const node = template.cloneNode(true);
+            node.style.display = '';
+            node.id = '';
+            node.classList.add('fade');
+
+            const header = node.querySelector('.toast-header strong') || node.querySelector('#toastTitle');
+            const bodyEl = node.querySelector('.toast-body') || node.querySelector('#toastBody');
+
+            if (header) header.textContent = title || 'Notificación';
+            if (bodyEl) bodyEl.textContent = body || '';
+
+            // color según tipo
+            if (type === 'success') {
+                node.querySelector('.toast-header').style.backgroundColor = '#e6ffed';
+            } else if (type === 'error' || type === 'danger') {
+                node.querySelector('.toast-header').style.backgroundColor = '#ffecec';
+            } else {
+                node.querySelector('.toast-header').style.backgroundColor = '';
+            }
+
+            container.appendChild(node);
+            const bsToast = new bootstrap.Toast(node, { delay: 5000 });
+            bsToast.show();
+
+            // remover del DOM cuando termine
+            node.addEventListener('hidden.bs.toast', function () { node.remove(); });
+        }
+
+        // Dark mode toggle: aplica clase en <body> y guarda en localStorage
+        (function() {
+            const key = 'gv.darkMode';
+            function applyDark(dark) {
+                if (dark) document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode');
+            }
+            // Init from localStorage
+            try {
+                const saved = localStorage.getItem(key);
+                applyDark(saved === '1');
+            } catch(e) { /* ignore */ }
+
+            // Expose toggle to global
+            window.toggleDarkMode = function() {
+                try {
+                    const isDark = document.body.classList.toggle('dark-mode');
+                    localStorage.setItem(key, isDark ? '1' : '0');
+                } catch(e) { console.warn(e); }
+            };
+        })();
+    </script>
+</th:block>

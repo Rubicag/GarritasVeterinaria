@@ -11,6 +11,8 @@ import com.mycompany.repository.UsuarioRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +24,16 @@ public class CitaService {
     private final MascotaRepository mascotaRepository;
     private final ServicioRepository servicioRepository;
     private final UsuarioRepository usuarioRepository;
+    private final NotificacionService notificacionService;
 
     public CitaService(CitaRepository citaRepository, MascotaRepository mascotaRepository, 
-                      ServicioRepository servicioRepository, UsuarioRepository usuarioRepository) {
+                      ServicioRepository servicioRepository, UsuarioRepository usuarioRepository,
+                      NotificacionService notificacionService) {
         this.citaRepository = citaRepository;
         this.mascotaRepository = mascotaRepository;
         this.servicioRepository = servicioRepository;
         this.usuarioRepository = usuarioRepository;
+        this.notificacionService = notificacionService;
     }
 
     public List<Cita> listAll() { 
@@ -79,7 +84,17 @@ public class CitaService {
             c.setEstado(Cita.EstadoCita.Pendiente);
         }
         
-        return citaRepository.save(c);
+        Cita citaGuardada = citaRepository.save(c);
+        
+        // Enviar confirmación por email
+        try {
+            notificacionService.enviarConfirmacionCita(citaGuardada);
+        } catch (Exception e) {
+            // No fallar la creación si falla el email
+            // El error ya se registra en NotificacionService
+        }
+        
+        return citaGuardada;
     }
     
     public Cita update(Long id, Cita c) { 
@@ -139,6 +154,29 @@ public class CitaService {
                     .anyMatch(cita -> cita.getFecha().isAfter(inicio) && cita.getFecha().isBefore(fin));
         }
         return false;
+    }
+
+    /**
+     * Buscar citas con filtros opcionales y paginación.
+     * @param fechaDesde Fecha inicial (opcional)
+     * @param fechaHasta Fecha final (opcional)
+     * @param estado Estado de la cita (opcional)
+     * @param veterinarioId ID del veterinario (opcional)
+     * @param mascotaId ID de la mascota (opcional)
+     * @param pageable Configuración de paginación y ordenamiento
+     * @return Página de citas que cumplen los criterios
+     */
+    public Page<Cita> findByFilters(
+            LocalDateTime fechaDesde,
+            LocalDateTime fechaHasta,
+            Cita.EstadoCita estado,
+            Long veterinarioId,
+            Long mascotaId,
+            Pageable pageable
+    ) {
+        return citaRepository.findByFilters(
+            fechaDesde, fechaHasta, estado, veterinarioId, mascotaId, pageable
+        );
     }
 
     public boolean confirmarCita(Long citaId) {

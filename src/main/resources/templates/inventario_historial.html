@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head}" th:with="pageTitle='Historial - Garritas Veterinaria'"></th:block>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css"/>
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css"/>
+    <link rel="stylesheet" href="/static/css/theme.css"/>
+</head>
+<body class="bg-light">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="h4 mb-0">Historial de inventario</h2>
+                <small class="text-muted">Producto: <span th:text="${producto.nombre}">Producto</span></small>
+            </div>
+            <div>
+                <a th:href="@{/inventario}" class="btn btn-secondary">Volver a inventario</a>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(movimientos)}">
+            <div class="alert alert-info">No hay movimientos registrados para este producto (aún).</div>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(movimientos)}">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="tablaHistorial">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Cantidad</th>
+                                    <th>Stock Antes</th>
+                                    <th>Stock Después</th>
+                                    <th>Usuario</th>
+                                    <th>Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="m : ${movimientos}">
+                                    <td th:text="${#temporals.format(m.fecha, 'dd/MM/yyyy HH:mm')}">01/01/2025 12:00</td>
+                                    <td th:text="${m.tipo}">ENTRADA</td>
+                                    <td th:text="${m.cantidad}">0</td>
+                                    <td th:text="${m.stockAnterior}">0</td>
+                                    <td th:text="${m.stockActual}">0</td>
+                                    <td th:text="${m.usuario}">Sistema</td>
+                                    <td th:text="${m.motivo}">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/colResizable/1.6/colResizable-1.6.min.js"></script>
+    <script src="/static/js/ui.js"></script>
+
+    <script th:inline="none">
+        $(document).ready(function() {
+            const table = $('#tablaHistorial').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    { extend: 'copy', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+                    { extend: 'csv', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+                    { extend: 'excel', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+                    { extend: 'pdf', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+                    { extend: 'print', className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: ':visible' } },
+                    { extend: 'colvis', className: 'btn btn-sm btn-outline-secondary' }
+                ],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+                pageLength: 10,
+                lengthMenu: [Array.of(10,25,50,100), Array.of(10,25,50,100)],
+                responsive: true,
+                colReorder: true,
+                stateSave: true,
+                order: [[0, 'desc']],
+                stateSaveCallback: function(settings,data) {
+                    try { localStorage.setItem('dt-'+settings.sInstance, JSON.stringify(data)); } catch(e){}
+                },
+                stateLoadCallback: function(settings) {
+                    try { return JSON.parse(localStorage.getItem('dt-'+settings.sInstance)); } catch(e){ return null; }
+                }
+            });
+
+            // Habilitar colResizable si está disponible
+            function initColResizable(selector) {
+                if (!$.fn.colResizable) return;
+                try { $(selector).colResizable({ disable: true }); } catch(e){}
+                try {
+                    $(selector).colResizable({ liveDrag: true, gripInnerHtml: "<div class='grip-inner'></div>", draggingClass: 'col-resizing' });
+                } catch(e) { console.warn('colResizable init failed', e); }
+            }
+
+            initColResizable('#tablaHistorial');
+            table.on('draw.dt column-reorder.dt responsive-resize.dt', function() { initColResizable('#tablaHistorial'); });
+        });
+    </script>
+
+    <div th:replace="~{fragments/toasts :: toasts}"></div>
+    <div th:replace="~{fragments/modals :: modals}"></div>
+</body>
+</html>

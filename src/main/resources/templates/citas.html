@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <head>
-        <title>Citas - Garritas Veterinaria</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+        <th:block th:replace="~{fragments/head :: head}" th:with="pageTitle='Citas - Garritas Veterinaria'"></th:block>
+        <link rel="stylesheet" href="/static/css/theme.css"/>
     </head>
-    <body class="container py-4">
+    <body class="bg-light">
+    <!-- Header (fragment) -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container py-4">
         <h1 class="mb-4">Citas</h1>
 
         <div class="row">
@@ -33,6 +35,14 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Veterinario</label>
+                        <select class="form-select" name="veterinarioId" required>
+                            <option value="">Seleccionar veterinario...</option>
+                            <option th:each="v : ${veterinarios}" th:value="${v.id}" 
+                                    th:text="${v.nombre + ' ' + v.apellido}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Servicio</label>
                         <select class="form-select" name="servicioId" required>
                             <option value="">Seleccionar servicio...</option>
@@ -48,42 +58,166 @@
                         <textarea class="form-control" name="observaciones" rows="3"></textarea>
                     </div>
                     <button class="btn btn-primary" type="submit">Crear cita</button>
-                    <button class="btn btn-secondary" type="button" onclick="cargarCitasAPI()">Recargar con API</button>
+                    <button class="btn btn-secondary" type="button" id="btnRecargarCitas">Recargar con API</button>
                 </form>
             </div>
 
             <div class="col-md-6">
                 <h3>Listado de citas</h3>
-                <table class="table table-striped" id="citasTable">
+                
+                <!-- Filtros de búsqueda SERVER-SIDE -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">🔍 Filtros de Búsqueda</h6>
+                        <form method="get" action="/citas">
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha desde</label>
+                                    <input type="date" name="fechaDesde" class="form-control form-control-sm" 
+                                           th:value="${filtroFechaDesde}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fecha hasta</label>
+                                    <input type="date" name="fechaHasta" class="form-control form-control-sm" 
+                                           th:value="${filtroFechaHasta}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Estado</label>
+                                    <select name="estado" class="form-select form-select-sm">
+                                        <option value="">Todos</option>
+                                        <option value="Pendiente" th:selected="${filtroEstado == 'Pendiente'}">Pendiente</option>
+                                        <option value="Atendida" th:selected="${filtroEstado == 'Atendida'}">Atendida</option>
+                                        <option value="Cancelada" th:selected="${filtroEstado == 'Cancelada'}">Cancelada</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Veterinario</label>
+                                    <select name="veterinarioId" class="form-select form-select-sm">
+                                        <option value="">Todos</option>
+                                        <option th:each="v : ${veterinarios}" 
+                                                th:value="${v.id}" 
+                                                th:selected="${filtroVeterinarioId == v.id}"
+                                                th:text="${v.nombre + ' ' + v.apellido}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Mascota</label>
+                                    <select name="mascotaId" class="form-select form-select-sm">
+                                        <option value="">Todas</option>
+                                        <option th:each="m : ${mascotas}" 
+                                                th:value="${m.id}" 
+                                                th:selected="${filtroMascotaId == m.id}"
+                                                th:text="${m.nombre}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        🔍 Aplicar Filtros
+                                    </button>
+                                    <a href="/citas" class="btn btn-sm btn-secondary">
+                                        🔄 Limpiar
+                                    </a>
+                                    <span class="text-muted ms-2">
+                                        <small>Total: <strong th:text="${citasPage.totalElements}">0</strong> citas</small>
+                                    </span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <table class="table table-striped table-sm" id="citasTable">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Mascota</th>
+                            <th>Veterinario</th>
                             <th>Servicio</th>
                             <th>Fecha</th>
-                            <th>Observaciones</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="c : ${citas}">
+                        <tr th:each="c : ${citasPage.content}">
                             <td th:text="${c.id}"></td>
                             <td th:text="${c.mascota?.nombre ?: 'No disponible'}"></td>
+                            <td th:text="${(c.veterinario?.nombre ?: 'Sin asignar') + ' ' + (c.veterinario?.apellido ?: '')}"></td>
                             <td th:text="${c.servicio?.nombre ?: 'No disponible'}"></td>
                             <td th:text="${#temporals.format(c.fecha, 'dd/MM/yyyy HH:mm')}"></td>
-                            <td th:text="${c.observaciones}"></td>
                             <td>
-                                <button class="btn btn-sm btn-success" th:onclick="'confirmarCita(' + ${c.id} + ')'">
+                                <span class="badge" 
+                                      th:classappend="${c.estado.name() == 'Pendiente'} ? 'bg-warning' : (${c.estado.name() == 'Atendida'} ? 'bg-success' : 'bg-danger')"
+                                      th:text="${c.estado}"></span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-success btn-accion" th:attr="data-id=${c.id}" data-action="confirmar">
                                     Confirmar
                                 </button>
                             </td>
                         </tr>
+                        <tr th:if="${citasPage.totalElements == 0}">
+                            <td colspan="7" class="text-center text-muted">
+                                No hay citas que mostrar
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
+                
+                <!-- Controles de paginación -->
+                <nav th:if="${citasPage.totalPages > 1}">
+                    <ul class="pagination pagination-sm justify-content-center">
+                        <!-- Botón anterior -->
+                        <li class="page-item" th:classappend="${citasPage.first} ? 'disabled'">
+                            <a class="page-link" 
+                               th:href="@{/citas(page=${citasPage.number - 1}, size=${citasPage.size}, 
+                                       fechaDesde=${filtroFechaDesde}, fechaHasta=${filtroFechaHasta}, 
+                                       estado=${filtroEstado}, veterinarioId=${filtroVeterinarioId}, 
+                                       mascotaId=${filtroMascotaId})}">
+                                Anterior
+                            </a>
+                        </li>
+                        
+                        <!-- Números de página -->
+                        <li class="page-item" 
+                            th:each="i : ${#numbers.sequence(0, citasPage.totalPages - 1)}"
+                            th:if="${i >= citasPage.number - 2 and i <= citasPage.number + 2}"
+                            th:classappend="${i == citasPage.number} ? 'active'">
+                            <a class="page-link" 
+                               th:href="@{/citas(page=${i}, size=${citasPage.size}, 
+                                       fechaDesde=${filtroFechaDesde}, fechaHasta=${filtroFechaHasta}, 
+                                       estado=${filtroEstado}, veterinarioId=${filtroVeterinarioId}, 
+                                       mascotaId=${filtroMascotaId})}"
+                               th:text="${i + 1}">1</a>
+                        </li>
+                        
+                        <!-- Botón siguiente -->
+                        <li class="page-item" th:classappend="${citasPage.last} ? 'disabled'">
+                            <a class="page-link" 
+                               th:href="@{/citas(page=${citasPage.number + 1}, size=${citasPage.size}, 
+                                       fechaDesde=${filtroFechaDesde}, fechaHasta=${filtroFechaHasta}, 
+                                       estado=${filtroEstado}, veterinarioId=${filtroVeterinarioId}, 
+                                       mascotaId=${filtroMascotaId})}">
+                                Siguiente
+                            </a>
+                        </li>
+                    </ul>
+                    <p class="text-center text-muted">
+                        <small>
+                            Página <strong th:text="${citasPage.number + 1}">1</strong> de 
+                            <strong th:text="${citasPage.totalPages}">1</strong>
+                            (mostrando <strong th:text="${citasPage.numberOfElements}">0</strong> de 
+                            <strong th:text="${citasPage.totalElements}">0</strong>)
+                        </small>
+                    </p>
+                </nav>
             </div>
         </div>
 
         <!-- JavaScript para mejorar la interactividad -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="/static/js/ui.js"></script>
         <script th:inline="javascript">
             // Obtener token CSRF para peticiones AJAX
             const csrfToken = /*[[${_csrf.token}]]*/ '';
@@ -98,19 +232,20 @@
                     const tbody = document.querySelector('#citasTable tbody');
                     tbody.innerHTML = '';
                     
-                    citas.forEach(cita => {
+                        citas.forEach(cita => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${cita.id}</td>
                             <td>${cita.mascota?.nombre || 'No disponible'}</td>
+                            <td>${cita.veterinario?.nombre || 'Sin asignar'} ${cita.veterinario?.apellido || ''}</td>
                             <td>${cita.servicio?.nombre || 'No disponible'}</td>
                             <td>${new Date(cita.fecha).toLocaleString()}</td>
                             <td>${cita.observaciones || ''}</td>
-                            <td>
-                                <button class="btn btn-sm btn-success" onclick="confirmarCita(${cita.id})">
+                                <td>
+                                <button class="btn btn-sm btn-success btn-accion" data-id="${cita.id}" data-action="confirmar">
                                     Confirmar
                                 </button>
-                            </td>
+                                </td>
                         `;
                         tbody.appendChild(row);
                     });
@@ -141,6 +276,14 @@
                     console.error('Error:', error);
                     alert('Error al confirmar la cita');
                 }
+            }
+            // Registrar acción confirmar en el registry global (variantes de nombre)
+            if (typeof registerAction === 'function') {
+                try {
+                    registerAction('confirmar', confirmarCita);
+                    registerAction('confirmarcita', confirmarCita);
+                    registerAction('confirmarCita', confirmarCita);
+                } catch(e){ console.warn('Registro confirmar falló', e); }
             }
             
             // Crear cita usando API
@@ -184,5 +327,9 @@
             });
         </script>
 
+        <div th:replace="~{fragments/toasts :: toasts}"></div>
+        <div th:replace="~{fragments/modals :: modals}"></div>
+
+    </div>
     </body>
 </html>

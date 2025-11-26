@@ -1,0 +1,16 @@
+<th:block th:fragment="botones">
+    <!-- Reusable button fragments -->
+    <th:block th:fragment="btnPrimary(label, icon)">
+        <button class="btn btn-primary">
+            <i th:if="${icon != null}" th:classappend="${icon} + ' me-1'"></i>
+            <span th:text="${label}">Acción</span>
+        </button>
+    </th:block>
+
+    <th:block th:fragment="btnOutline(label, icon)">
+        <button class="btn btn-outline-secondary">
+            <i th:if="${icon != null}" th:classappend="${icon} + ' me-1'"></i>
+            <span th:text="${label}">Acción</span>
+        </button>
+    </th:block>
+</th:block>

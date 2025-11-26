@@ -1,52 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Gestión de Usuarios - Garritas Veterinaria</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <th:block th:replace="~{fragments/head :: head}" th:with="pageTitle='Gestión de Usuarios - Garritas Veterinarias'"></th:block>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <link rel="stylesheet" href="/static/css/theme.css"/>
 </head>
 <body class="bg-light">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-heart-fill me-2"></i>Garritas Veterinaria
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/usuarios"><i class="bi bi-people me-1"></i>Usuarios</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/mascotas"><i class="bi bi-heart me-1"></i>Mascotas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/citas"><i class="bi bi-calendar-event me-1"></i>Citas</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i>Mi Cuenta
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/perfil">Mi Perfil</a></li>
-                            <li><a class="dropdown-item" href="/configuracion">Configuración</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Header (fragment) -->
+    <div th:replace="~{fragments/header :: header}"></div>
 
     <div class="container mt-4">
         <!-- Header -->
@@ -56,19 +17,19 @@
                 <p class="text-muted">Administra usuarios del sistema veterinario</p>
             </div>
             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#nuevoUsuarioModal">
-                <i class="bi bi-person-plus me-2"></i>Nuevo Usuario
+                <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
             </button>
         </div>
 
         <!-- Mensajes -->
         <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
+            <i class="fas fa-check-circle me-2"></i>
             <span th:text="${param.success}">Operación exitosa</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         
         <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>
+            <i class="fas fa-triangle-exclamation me-2"></i>
             <span th:text="${param.error}">Error en la operación</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -100,8 +61,8 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">&nbsp;</label>
-                        <button class="btn btn-outline-secondary d-block w-100" onclick="limpiarFiltros()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Limpiar
+                        <button class="btn btn-outline-secondary d-block w-100" id="btnLimpiarUsuarios" type="button">
+                            <i class="fas fa-sync me-1"></i>Limpiar
                         </button>
                     </div>
                 </div>
@@ -112,7 +73,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-people me-2"></i>Lista de Usuarios
+                    <i class="fas fa-users me-2"></i>Lista de Usuarios
                     <span class="badge bg-secondary ms-2" id="contadorUsuarios">0</span>
                 </h5>
             </div>
@@ -137,7 +98,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                            <i class="bi bi-person-fill"></i>
+                                            <i class="fas fa-user"></i>
                                         </div>
                                         <span th:text="${usuario.usuario}">admin</span>
                                     </div>
@@ -156,18 +117,16 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" title="Ver detalles" 
-                                                th:onclick="'verUsuario(' + ${usuario.id} + ')'">
-                                            <i class="bi bi-eye"></i>
+                                        <button class="btn btn-outline-primary btn-accion" title="Ver detalles" th:attr="data-id=${usuario.id}" data-action="ver">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-warning" title="Editar" 
-                                                th:onclick="'editarUsuario(' + ${usuario.id} + ')'">
-                                            <i class="bi bi-pencil"></i>
+                                        <button class="btn btn-outline-warning btn-accion" title="Editar" th:attr="data-id=${usuario.id}" data-action="editar">
+                                            <i class="fas fa-pen"></i>
                                         </button>
                                         <button class="btn btn-outline-danger btn-eliminar" title="Eliminar"
                                                 th:data-usuario-id="${usuario.id}"
                                                 th:data-usuario-nombre="${usuario.usuario}">
-                                            <i class="bi bi-trash"></i>
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -185,11 +144,12 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-plus me-2"></i>Nuevo Usuario
+                        <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form th:action="@{/usuarios}" method="post" id="formNuevoUsuario">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -229,7 +189,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check2 me-1"></i>Crear Usuario
+                            <i class="fas fa-check me-1"></i>Crear Usuario
                         </button>
                     </div>
                 </form>
@@ -243,7 +203,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-person me-2"></i>Detalles del Usuario
+                        <i class="fas fa-user me-2"></i>Detalles del Usuario
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -261,8 +221,9 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
+        <script src="/static/js/ui.js"></script>
 
-    <script>
+    <script th:inline="none">
         $(document).ready(function() {
             // Inicializar DataTable
             const table = $('#tablaUsuarios').DataTable({
@@ -274,27 +235,23 @@
                 order: [[0, 'desc']]
             });
 
-            // Actualizar contador
-            updateCounter();
-            table.on('draw', updateCounter);
-
-            // Filtros
+            // Buscar (búsqueda global)
             $('#buscarUsuario').on('keyup', function() {
                 table.search(this.value).draw();
             });
 
+            // Filtros por columna (rol y estado)
             $('#filtroRol, #filtroEstado').on('change', function() {
                 const rol = $('#filtroRol').val();
                 const estado = $('#filtroEstado').val();
-                
                 table.columns(3).search(rol).columns(4).search(estado).draw();
             });
 
-            // Validación de formulario
+            // Validación de formulario (nombres de inputs en plantilla)
             $('#formNuevoUsuario').on('submit', function(e) {
-                const password = $('input[name="password"]').val();
+                const password = $('input[name="contrasena"]').val();
                 const confirmPassword = $('input[name="confirmPassword"]').val();
-                
+
                 if (password !== confirmPassword) {
                     e.preventDefault();
                     alert('Las contraseñas no coinciden');
@@ -302,10 +259,22 @@
                 }
             });
 
+            // Contador de filas visibles
             function updateCounter() {
                 const count = table.rows({ filter: 'applied' }).count();
                 $('#contadorUsuarios').text(count);
             }
+
+            // Actualizar contador cuando la tabla se dibuja
+            table.on('draw', updateCounter);
+            updateCounter();
+
+            // Delegación para botones eliminar (funciona con DataTables y filas dinámicas)
+            $('#tablaUsuarios').on('click', '.btn-eliminar', function() {
+                const id = $(this).data('usuario-id');
+                const nombre = $(this).data('usuario-nombre');
+                eliminarUsuario(id, nombre);
+            });
         });
 
         function limpiarFiltros() {
@@ -317,7 +286,10 @@
 
         function verUsuario(id) {
             fetch(`/api/usuarios/${id}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Usuario no encontrado');
+                    return response.json();
+                })
                 .then(data => {
                     const rolNombre = data.rol ? data.rol.nombre : 'Sin rol';
                     const content = `
@@ -335,11 +307,11 @@
                         </div>
                         <div class="row mt-2">
                             <div class="col-sm-4"><strong>Nombre:</strong></div>
-                            <div class="col-sm-8">${data.nombre} ${data.apellido}</div>
+                            <div class="col-sm-8">${data.nombre || ''} ${data.apellido || ''}</div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-sm-4"><strong>DNI:</strong></div>
-                            <div class="col-sm-8">${data.dni}</div>
+                            <div class="col-sm-8">${data.dni || ''}</div>
                         </div>
                         <div class="row mt-2">
                             <div class="col-sm-4"><strong>Rol:</strong></div>
@@ -365,12 +337,22 @@
 
         function eliminarUsuario(id, nombre) {
             if (confirm(`¿Estás seguro de que deseas eliminar al usuario "${nombre}"?`)) {
+                // Read CSRF token/header from meta tags added in head fragment
+                const csrfToken = document.querySelector('meta[name="_csrf"]') ? document.querySelector('meta[name="_csrf"]').getAttribute('content') : null;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]') ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content') : 'X-CSRF-TOKEN';
+
+                const headers = {};
+                if (csrfToken) headers[csrfHeader] = csrfToken;
+
                 fetch(`/api/usuarios/${id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: headers
                 })
                 .then(response => {
                     if (response.ok) {
                         location.reload();
+                    } else if (response.status === 403) {
+                        alert('Acceso denegado: token CSRF faltante o inválido. Vuelve a iniciar sesión.');
                     } else {
                         alert('Error al eliminar el usuario');
                     }
@@ -381,37 +363,24 @@
                 });
             }
         }
-
-        // Event listener para botones de eliminar
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn-eliminar').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = this.getAttribute('data-usuario-id');
-                    const nombre = this.getAttribute('data-usuario-nombre');
-                    eliminarUsuario(id, nombre);
-                });
-            });
-        });
+        // Registrar acciones locales en el registry global (nombres cortos y largos para compatibilidad)
+        if (typeof registerAction === 'function') {
+            try {
+                // Nombres cortos (canónicos)
+                registerAction('ver', verUsuario);
+                registerAction('editar', editarUsuario);
+                // Nombres largos por compatibilidad con plantillas antiguas
+                registerAction('verUsuario', verUsuario);
+                registerAction('editarUsuario', editarUsuario);
+                // Registro de eliminación por nombre por si alguna parte usa data-action
+                registerAction('eliminarUsuario', eliminarUsuario);
+            } catch(e) { console.warn('Registro de acciones usuarios falló', e); }
+        }
     </script>
 
-    <style>
-        .avatar-sm {
-            width: 32px;
-            height: 32px;
-            font-size: 14px;
-        }
-        
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            letter-spacing: 0.5px;
-        }
-        
-        .badge {
-            font-size: 0.75rem;
-        }
-    </style>
+    <div th:replace="~{fragments/toasts :: toasts}"></div>
+    <div th:replace="~{fragments/modals :: modals}"></div>
+
+    <!-- Styles moved to theme.css -->
 </body>
 </html>

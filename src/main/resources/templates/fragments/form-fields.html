@@ -1,0 +1,9 @@
+<th:block th:fragment="inputIcon(label, name, value, type, iconClass, help, showErrors)">
+    <div class="mb-3 input-icon">
+        <label th:for="${name}" class="form-label form-label-strong" th:text="${label}">Label</label>
+        <i th:class="${iconClass} + ' fa-fw'" aria-hidden="true"></i>
+        <input th:id="${name}" th:name="${name}" th:type="${type ?: 'text'}" th:value="${value ?: param[name]}" class="form-control focus-ring" />
+        <div th:if="${help}" class="form-text small text-muted" th:text="${help}"></div>
+        <div th:if="${showErrors == true and #fields.hasErrors(name)}" class="invalid-feedback d-block" th:errors="*{${name}}"></div>
+    </div>
+</th:block>

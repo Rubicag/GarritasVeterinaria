@@ -9,6 +9,8 @@ import com.mycompany.repository.UsuarioRepository;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class UsuarioService implements UserDetailsService {
 
+	private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
+	
 	private final UsuarioRepository usuarioRepository;
 	private final PasswordEncoder passwordEncoder;
 
@@ -35,14 +39,37 @@ public class UsuarioService implements UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		logger.info("========================================");
+		logger.info("INTENTO DE LOGIN");
+		logger.info("========================================");
+		logger.info("Usuario solicitado: '{}'", username);
+		
 		Optional<Usuario> usuario = usuarioRepository.findByUsuario(username);
 		
 		if (usuario.isEmpty()) {
+			logger.error("❌ USUARIO NO ENCONTRADO: '{}'", username);
+			logger.error("El usuario '{}' no existe en la base de datos", username);
+			logger.info("========================================");
 			throw new UsernameNotFoundException("Usuario no encontrado: " + username);
 		}
 		
 		Usuario user = usuario.get();
 		String role = user.getRol() != null ? user.getRol().getNombre() : "USER";
+		
+		logger.info("✓ Usuario encontrado en BD:");
+		logger.info("  - ID: {}", user.getId());
+		logger.info("  - Usuario: '{}'", user.getUsuario());
+		logger.info("  - Nombre: {} {}", user.getNombre(), user.getApellido());
+		logger.info("  - Email: {}", user.getCorreo());
+		logger.info("  - Rol: {}", role);
+		logger.info("  - Hash contraseña (primeros 20 chars): {}", 
+			user.getContrasena() != null ? user.getContrasena().substring(0, Math.min(20, user.getContrasena().length())) : "NULL");
+		logger.info("  - Longitud hash: {}", user.getContrasena() != null ? user.getContrasena().length() : 0);
+		logger.info("  - Formato BCrypt: {}", user.getContrasena() != null && user.getContrasena().startsWith("$2a$") ? "SÍ ✓" : "NO ✗");
+		logger.info("========================================");
+		logger.info("Spring Security validará la contraseña automáticamente");
+		logger.info("Si el login falla después de esto, la contraseña es incorrecta");
+		logger.info("========================================");
 		
 		return User.builder()
 				.username(user.getUsuario())

@@ -1,55 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Inventario - Garritas Veterinaria</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <th:block th:replace="~{fragments/head :: head}" th:with="pageTitle='Inventario - Garritas Veterinaria'"></th:block>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/css/dataTables.bootstrap5.min.css"/>
+    <link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.6.2/css/colReorder.dataTables.min.css"/>
+    <link rel="stylesheet" href="/static/css/theme.css"/>
 </head>
 <body class="bg-light">
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <i class="bi bi-heart-fill me-2"></i>Garritas Veterinaria
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/usuarios"><i class="bi bi-people me-1"></i>Usuarios</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/mascotas"><i class="bi bi-heart me-1"></i>Mascotas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/inventario"><i class="bi bi-box-seam me-1"></i>Inventario</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/citas"><i class="bi bi-calendar-event me-1"></i>Citas</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i>Mi Cuenta
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/perfil">Mi Perfil</a></li>
-                            <li><a class="dropdown-item" href="/configuracion">Configuración</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Cerrar Sesión</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Header (fragment) -->
+    <div th:replace="~{fragments/header :: header}"></div>
 
     <div class="container mt-4">
         <!-- Header -->
@@ -60,26 +19,29 @@
             </div>
             <div>
                 <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
-                    <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
+                    <i class="fas fa-circle-plus me-2"></i>Nuevo Producto
                 </button>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#movimientoModal">
-                    <i class="bi bi-arrow-left-right me-2"></i>Movimiento
+                    <i class="fas fa-arrows-left-right me-2"></i>Movimiento
                 </button>
             </div>
         </div>
 
-        <!-- Mensajes -->
-        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
-            <span th:text="${param.success}">Operación exitosa</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        
-        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            <span th:text="${param.error}">Error en la operación</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+        <!-- Mensajes: convertidos a toasts -->
+        <th:block th:if="${param.success}">
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                showToast('Éxito', /*[[${param.success}]]*/ 'Operación exitosa', 'success');
+                /*]]>*/
+            </script>
+        </th:block>
+        <th:block th:if="${param.error}">
+            <script th:inline="javascript">
+                /*<![CDATA[*/
+                showToast('Error', /*[[${param.error}]]*/ 'Error en la operación', 'error');
+                /*]]>*/
+            </script>
+        </th:block>
 
         <!-- Estadísticas del inventario -->
         <div class="row mb-4">
@@ -92,7 +54,7 @@
                                 <h4 class="mb-0" id="totalProductos">0</h4>
                             </div>
                             <div class="align-self-center">
-                                <i class="bi bi-box-seam fs-1 opacity-50"></i>
+                                <i class="fas fa-box fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -107,7 +69,7 @@
                                 <h4 class="mb-0" id="stockBajo">0</h4>
                             </div>
                             <div class="align-self-center">
-                                <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                                <i class="fas fa-triangle-exclamation fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -122,7 +84,7 @@
                                 <h4 class="mb-0" id="porVencer">0</h4>
                             </div>
                             <div class="align-self-center">
-                                <i class="bi bi-calendar-x fs-1 opacity-50"></i>
+                                <i class="fas fa-calendar-x fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -137,7 +99,7 @@
                                 <h4 class="mb-0" id="valorTotal">$0.00</h4>
                             </div>
                             <div class="align-self-center">
-                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                                <i class="fas fa-dollar-sign fs-1 opacity-50"></i>
                             </div>
                         </div>
                     </div>
@@ -185,15 +147,15 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">&nbsp;</label>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-primary" onclick="aplicarFiltros()">
-                                <i class="bi bi-search me-1"></i>Buscar
+                            <div class="d-flex gap-2">
+                            <button class="btn btn-primary" id="btnBuscar" type="button">
+                                <i class="fas fa-search me-1"></i>Buscar
                             </button>
-                            <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
-                                <i class="bi bi-arrow-clockwise"></i>
+                            <button class="btn btn-outline-secondary" id="btnLimpiar" type="button">
+                                <i class="fas fa-sync"></i>
                             </button>
-                            <button class="btn btn-outline-info" onclick="exportarExcel()">
-                                <i class="bi bi-file-earmark-excel"></i>
+                            <button class="btn btn-outline-info" id="btnExportar" type="button">
+                                <i class="fas fa-file-excel"></i>
                             </button>
                         </div>
                     </div>
@@ -205,12 +167,12 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-box-seam me-2"></i>Lista de Productos
+                    <i class="fas fa-box me-2"></i>Lista de Productos
                 </h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="tablaInventario">
+                    <table class="table table-striped table-hover responsive-stacked" id="tablaInventario">
                         <thead class="table-dark">
                             <tr>
                                 <th>Código</th>
@@ -237,11 +199,11 @@
                                                      (producto.categoria == 'ACCESORIOS' ? 'avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2' :
                                                      (producto.categoria == 'JUGUETES' ? 'avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2' :
                                                      'avatar-sm bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2'))))}">
-                                            <i th:class="${producto.categoria == 'MEDICAMENTO' ? 'bi bi-capsule' : 
-                                                        (producto.categoria == 'HIGIENE' ? 'bi bi-droplet' :
-                                                        (producto.categoria == 'ALIMENTO' ? 'bi bi-egg' :
-                                                        (producto.categoria == 'ACCESORIOS' ? 'bi bi-gear' :
-                                                        (producto.categoria == 'JUGUETES' ? 'bi bi-puzzle' : 'bi bi-box'))))}"></i>
+                                            <i th:class="${producto.categoria == 'MEDICAMENTO' ? 'fas fa-capsules' : 
+                                                        (producto.categoria == 'HIGIENE' ? 'fas fa-tint' :
+                                                        (producto.categoria == 'ALIMENTO' ? 'fas fa-egg' :
+                                                        (producto.categoria == 'ACCESORIOS' ? 'fas fa-gear' :
+                                                        (producto.categoria == 'JUGUETES' ? 'fas fa-puzzle-piece' : 'fas fa-box'))))}"></i>
                                         </div>
                                         <div>
                                             <div class="fw-bold" th:text="${producto.nombre}">Amoxicilina 500mg</div>
@@ -291,21 +253,21 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" title="Ver detalles" 
-                                                th:onclick="'verProducto(' + ${producto.id} + ')'">
-                                            <i class="bi bi-eye"></i>
+                                        <button class="btn btn-outline-primary btn-accion" title="Ver detalles" 
+                                            th:attr="data-id=${producto.id}" data-action="ver">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-outline-warning" title="Editar" 
-                                                th:onclick="'editarProducto(' + ${producto.id} + ')'">
-                                            <i class="bi bi-pencil"></i>
+                                        <button class="btn btn-outline-warning btn-accion" title="Editar" 
+                                            th:attr="data-id=${producto.id}" data-action="editar">
+                                            <i class="fas fa-pen"></i>
                                         </button>
-                                        <button class="btn btn-outline-info" title="Movimiento" 
-                                                th:onclick="'nuevoMovimiento(' + ${producto.id} + ')'">
-                                            <i class="bi bi-arrow-left-right"></i>
+                                        <button class="btn btn-outline-info btn-accion" title="Movimiento" 
+                                            th:attr="data-id=${producto.id}" data-action="movimiento">
+                                            <i class="fas fa-arrows-left-right"></i>
                                         </button>
-                                        <button class="btn btn-outline-success" title="Historial" 
-                                                th:onclick="'verHistorial(' + ${producto.id} + ')'">
-                                            <i class="bi bi-clock-history"></i>
+                                        <button class="btn btn-outline-success btn-accion" title="Historial" 
+                                            th:attr="data-id=${producto.id}" data-action="historial">
+                                            <i class="fas fa-history"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -323,11 +285,12 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
+                        <i class="fas fa-plus-circle me-2"></i>Nuevo Producto
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form th:action="@{/inventario}" method="post" id="formNuevoProducto">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -391,7 +354,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-success">
-                            <i class="bi bi-check2 me-1"></i>Crear Producto
+                            <i class="fas fa-check me-1"></i>Crear Producto
                         </button>
                     </div>
                 </form>
@@ -405,11 +368,12 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-arrow-left-right me-2"></i>Nuevo Movimiento
+                        <i class="fas fa-arrows-left-right me-2"></i>Nuevo Movimiento
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form th:action="@{/inventario/movimiento}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-12">
@@ -445,7 +409,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check2 me-1"></i>Registrar Movimiento
+                            <i class="fas fa-check me-1"></i>Registrar Movimiento
                         </button>
                     </div>
                 </form>
@@ -459,7 +423,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-box-seam me-2"></i>Detalles del Producto
+                        <i class="fas fa-box me-2"></i>Detalles del Producto
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -473,25 +437,160 @@
         </div>
     </div>
 
+                <!-- Modal Editar Producto (reemplaza página de edición) -->
+                <div class="modal fade" id="editarProductoModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Editar Producto</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form id="formEditarProducto">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <div class="modal-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nombre *</label>
+                                            <input type="text" class="form-control" name="nombre" required minlength="2" />
+                                            <div class="invalid-feedback">Ingrese el nombre del producto (mínimo 2 caracteres).</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Categoría</label>
+                                            <select class="form-select" name="categoria">
+                                                <option value="">Sin categoría</option>
+                                                <option value="MEDICAMENTO">Medicamento</option>
+                                                <option value="VACUNA">Vacuna</option>
+                                                <option value="ALIMENTO">Alimento</option>
+                                                <option value="ACCESORIO">Accesorio</option>
+                                                <option value="HIGIENE">Higiene</option>
+                                                <option value="INSTRUMENTAL">Instrumental</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Descripción</label>
+                                            <textarea class="form-control" name="descripcion" rows="2"></textarea>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Stock</label>
+                                            <input type="number" class="form-control" name="stock" min="0" />
+                                            <div class="invalid-feedback">Ingrese un stock válido (entero >= 0).</div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Stock Mínimo</label>
+                                            <input type="number" class="form-control" name="stockMinimo" min="0" />
+                                            <div class="invalid-feedback">Ingrese un stock mínimo válido (entero >= 0).</div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Precio</label>
+                                            <input type="number" class="form-control" name="precio" step="0.01" min="0" />
+                                            <div class="invalid-feedback">Ingrese un precio válido (>= 0, máximo 2 decimales).</div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Proveedor</label>
+                                            <input type="text" class="form-control" name="proveedor" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Fecha de Vencimiento</label>
+                                            <input type="date" class="form-control" name="fechaVencimiento" />
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-center">
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" name="activo" id="editarActivo">
+                                                <label class="form-check-label" for="editarActivo">Producto activo</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <small class="text-muted">Consejo: use el campo Precio con 2 decimales. Campos marcados con * son obligatorios.</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/colreorder/1.6.2/js/dataTables.colReorder.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/colResizable/1.6/colResizable-1.6.min.js"></script>
+    <script src="/static/js/ui.js"></script>
 
-    <script th:inline="javascript">
+    <script th:inline="none">
         $(document).ready(function() {
             // Inicializar DataTable
-            const table = $('#tablaInventario').DataTable({
-                language: {
-                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-                },
+                const table = $('#tablaInventario').DataTable({
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
                 pageLength: 10,
+                lengthMenu: [Array.of(10,25,50,100), Array.of(10,25,50,100)],
                 responsive: true,
-                order: [[0, 'asc']]
+                colReorder: true,
+                stateSave: true,
+                order: [[0, 'asc']],
+                stateSaveCallback: function(settings,data) {
+                    try { localStorage.setItem('dt-'+settings.sInstance, JSON.stringify(data)); } catch(e){}
+                },
+                stateLoadCallback: function(settings) {
+                    try { return JSON.parse(localStorage.getItem('dt-'+settings.sInstance)); } catch(e){ return null; }
+                }
             });
 
             // Cargar estadísticas
             cargarEstadisticas();
+            // Búsqueda en tiempo real: actualizar búsqueda global al tipear
+            $('#buscarProducto').on('keyup', function(e){
+                // Si se presiona ESC limpiar
+                if (e.key === 'Escape') { $(this).val(''); }
+                $('#tablaInventario').DataTable().search(this.value).draw();
+            });
+            // Activar redimensionado de columnas si está disponible (colResizable)
+            function initColResizable(selector) {
+                if (!$.fn.colResizable) return;
+                try { $(selector).colResizable({ disable: true }); } catch(e) {}
+                try {
+                    $(selector).colResizable({
+                        liveDrag: true,
+                        gripInnerHtml: "<div class='grip-inner'></div>",
+                        draggingClass: 'col-resizing'
+                    });
+                } catch(e) { console.warn('colResizable init failed', e); }
+            }
+
+            initColResizable('#tablaInventario');
+
+            // Re-aplicar colResizable en redraws y eventos relevantes
+            table.on('draw.dt column-reorder.dt responsive-resize.dt', function() {
+                initColResizable('#tablaInventario');
+            });
+
+            // Delegated handler para botones de acción en la tabla (funciona con redraws de DataTables)
+            // Acepta tanto nombres cortos ('ver','editar','movimiento','historial') como
+            // los nombres específicos usados en los botones ('verProducto','editarProducto','nuevoMovimiento','verHistorial').
+            $('#tablaInventario').on('click', '.btn-accion', function(e){
+                e.preventDefault();
+                const id = $(this).attr('data-id') || $(this).data('id');
+                const action = $(this).attr('data-action') || '';
+                if (!id || !action) return;
+                // Normalizar y enrutar a la función correspondiente
+                if (action === 'ver' || action === 'verProducto') return verProducto(id);
+                if (action === 'editar' || action === 'editarProducto') return editarProducto(id);
+                if (action === 'movimiento' || action === 'nuevoMovimiento') return nuevoMovimiento(id);
+                if (action === 'historial' || action === 'verHistorial') return verHistorial(id);
+                // Fallback: intentar rutas por prefijos
+                if (action.startsWith('ver')) return verProducto(id);
+                if (action.startsWith('editar')) return editarProducto(id);
+                if (action.startsWith('nuevo') || action.startsWith('mov')) return nuevoMovimiento(id);
+            });
+
+            // Botones de filtros (evitar inline onclick para depuración)
+            $('#btnBuscar').on('click', function(){ aplicarFiltros(); });
+            $('#btnLimpiar').on('click', function(){ limpiarFiltros(); });
+            $('#btnExportar').on('click', function(){ exportarExcel(); });
         });
 
         function aplicarFiltros() {
@@ -583,7 +682,36 @@
         }
 
         function editarProducto(id) {
-            window.location.href = `/inventario/${id}/editar`;
+            // Cargar datos del producto y abrir modal de edición
+            fetch(`/api/inventario/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Popular campos del formulario de edición
+                    const form = document.getElementById('formEditarProducto');
+                    if (!form) return;
+                    form.dataset.id = id;
+                    form.querySelector('input[name="nombre"]').value = data.nombre || '';
+                    form.querySelector('textarea[name="descripcion"]').value = data.descripcion || '';
+                    const categoriaEl = form.querySelector('select[name="categoria"]');
+                    if (categoriaEl) categoriaEl.value = data.categoria || '';
+                    form.querySelector('input[name="stock"]').value = data.stock != null ? data.stock : '';
+                    form.querySelector('input[name="stockMinimo"]').value = data.stockMinimo != null ? data.stockMinimo : '';
+                    form.querySelector('input[name="precio"]').value = data.precio != null ? data.precio : '';
+                    form.querySelector('input[name="proveedor"]').value = data.proveedor || '';
+                    form.querySelector('input[name="fechaVencimiento"]').value = data.fechaVencimiento ? new Date(data.fechaVencimiento).toISOString().slice(0,10) : '';
+                    form.querySelector('input[name="activo"]').checked = !!data.activo;
+
+                    // Mostrar modal
+                    try {
+                        const modalEl = document.getElementById('editarProductoModal');
+                        const modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                    } catch(e) { console.error('No se pudo mostrar modal de edición', e); }
+                })
+                .catch(error => {
+                    console.error('Error al cargar producto para edición:', error);
+                    showToast('Error', 'No se pudo cargar el producto', 'error');
+                });
         }
 
         function nuevoMovimiento(id) {
@@ -599,30 +727,136 @@
         function exportarExcel() {
             window.location.href = '/inventario/exportar/excel';
         }
+        // Registrar acciones locales en el registry global (nombres cortos y largos para compatibilidad)
+        if (typeof registerAction === 'function') {
+            try {
+                // Nombres cortos (canónicos)
+                registerAction('ver', verProducto);
+                registerAction('editar', editarProducto);
+                registerAction('movimiento', nuevoMovimiento);
+                registerAction('historial', verHistorial);
+                // Nombres largos por compatibilidad con plantillas/JS antiguos
+                registerAction('verProducto', verProducto);
+                registerAction('editarProducto', editarProducto);
+                registerAction('nuevoMovimiento', nuevoMovimiento);
+                registerAction('verHistorial', verHistorial);
+            } catch(e) { console.warn('No se pudieron registrar acciones de inventario', e); }
+        }
+
+        // Manejo del submit del formulario de edición usando fetch (envío como application/x-www-form-urlencoded)
+        (function(){
+            const form = document.getElementById('formEditarProducto');
+            if (!form) return;
+
+            // Validación bootstrap simple
+                form.addEventListener('submit', function(evt){
+                evt.preventDefault();
+                // limpiar marcas previas
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+                // Validación nativa
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // Validaciones custom
+                const nombreEl = form.querySelector('input[name="nombre"]');
+                const stockEl = form.querySelector('input[name="stock"]');
+                const stockMinEl = form.querySelector('input[name="stockMinimo"]');
+                const precioEl = form.querySelector('input[name="precio"]');
+
+                const nombre = nombreEl ? nombreEl.value.trim() : '';
+                const stockVal = stockEl ? stockEl.value.trim() : '';
+                const stockMinVal = stockMinEl ? stockMinEl.value.trim() : '';
+                const precioVal = precioEl ? precioEl.value.trim() : '';
+
+                const stock = stockVal === '' ? null : parseInt(stockVal, 10);
+                const stockMin = stockMinVal === '' ? null : parseInt(stockMinVal, 10);
+                const precio = precioVal === '' ? null : parseFloat(precioVal);
+
+                if (nombre.length < 2) {
+                    if (nombreEl) nombreEl.classList.add('is-invalid');
+                    nombreEl && nombreEl.focus();
+                    showToast('Error', 'El nombre debe tener al menos 2 caracteres', 'error');
+                    return;
+                }
+
+                if (precio !== null && (isNaN(precio) || precio < 0)) {
+                    if (precioEl) precioEl.classList.add('is-invalid');
+                    precioEl && precioEl.focus();
+                    showToast('Error', 'Precio inválido', 'error');
+                    return;
+                }
+
+                // Validar máximo 2 decimales en precio si está presente
+                if (precioVal !== '' && !/^\d+(\.\d{1,2})?$/.test(precioVal)) {
+                    if (precioEl) precioEl.classList.add('is-invalid');
+                    precioEl && precioEl.focus();
+                    showToast('Error', 'Precio debe tener hasta 2 decimales', 'error');
+                    return;
+                }
+
+                if (stock !== null && stockMin !== null && stock < stockMin) {
+                    if (stockEl) stockEl.classList.add('is-invalid');
+                    if (stockMinEl) stockMinEl.classList.add('is-invalid');
+                    stockEl && stockEl.focus();
+                    showToast('Error', 'Stock debe ser mayor o igual al Stock Mínimo', 'error');
+                    return;
+                }
+
+                const id = form.dataset.id;
+                if (!id) { showToast('Error', 'ID de producto no definido', 'error'); return; }
+
+                // Construir body x-www-form-urlencoded
+                const fd = new FormData(form);
+                // Manejar checkbox activo para enviar booleano
+                if (!fd.has('activo')) fd.append('activo', 'off');
+                const params = new URLSearchParams();
+                for (const pair of fd.entries()) {
+                    params.append(pair[0], pair[1]);
+                }
+
+                // CSRF header y name (si existen en meta tags generadas por Thymeleaf)
+                const csrfMeta = document.querySelector('meta[name="_csrf"]');
+                const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' };
+                if (csrfMeta && csrfHeaderMeta) {
+                    headers[csrfHeaderMeta.getAttribute('content')] = csrfMeta.getAttribute('content');
+                }
+
+                fetch(`/inventario/${id}/editar`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: params.toString()
+                }).then(resp => {
+                    if (resp.redirected) {
+                        window.location.href = resp.url;
+                        return;
+                    }
+                    if (resp.ok) {
+                        // Cerrar modal y recargar tabla/estadísticas
+                        const modalEl = document.getElementById('editarProductoModal');
+                        try { bootstrap.Modal.getInstance(modalEl).hide(); } catch(e) { $(modalEl).modal('hide'); }
+                        showToast('Éxito', 'Producto actualizado', 'success');
+                        setTimeout(() => location.reload(), 600);
+                    } else {
+                        resp.text().then(t => {
+                            console.error('Error al actualizar producto', t);
+                            showToast('Error', 'No se pudo actualizar el producto', 'error');
+                        });
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    showToast('Error', 'Error en la petición', 'error');
+                });
+            });
+        })();
     </script>
 
-    <style>
-        .avatar-sm {
-            width: 32px;
-            height: 32px;
-            font-size: 14px;
-        }
-        
-        .table th {
-            border-top: none;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            letter-spacing: 0.5px;
-        }
-        
-        .badge {
-            font-size: 0.75rem;
-        }
+    <div th:replace="~{fragments/toasts :: toasts}"></div>
+    <div th:replace="~{fragments/modals :: modals}"></div>
 
-        .font-monospace {
-            font-family: 'Courier New', monospace;
-        }
-    </style>
+    <!-- Styles moved to theme.css -->
 </body>
 </html>

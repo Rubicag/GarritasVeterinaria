@@ -19,45 +19,58 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-/**
- * Enum para el sexo de la mascota
- */
-enum Sexo {
-	Macho, Hembra
-}
-
 @Entity
 @Table(name = "mascota")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Mascota {
+	
+	/**
+	 * Enum para el sexo de la mascota
+	 */
+	public static enum Sexo {
+		Macho, Hembra
+	}
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id_mascota")
 	private Long id;
 
+	@NotBlank(message = "El nombre de la mascota es obligatorio")
+	@Size(min = 2, max = 50, message = "El nombre debe tener entre 2 y 50 caracteres")
 	@Column(nullable = false)
 	private String nombre;
 
+	@NotBlank(message = "La especie es obligatoria")
+	@Size(max = 30, message = "La especie no puede exceder 30 caracteres")
 	@Column(nullable = false)
 	private String especie;
 
+	@Size(max = 50, message = "La raza no puede exceder 50 caracteres")
 	private String raza;
 
+	@NotNull(message = "El sexo es obligatorio")
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Sexo sexo;
 
+	@PastOrPresent(message = "La fecha de nacimiento no puede ser futura")
 	@Column(name = "fecha_nacimiento")
 	private LocalDate fechaNacimiento;
 
 	@Column(precision = 5, scale = 2)
 	private BigDecimal peso;
 
+	@NotNull(message = "El propietario es obligatorio")
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "id_usuario")
 	private Usuario propietario;
@@ -68,8 +81,8 @@ public class Mascota {
 	@OneToMany(mappedBy = "mascota", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private List<Cita> citas;
 
-	@OneToMany(mappedBy = "mascota", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-	private List<HistorialClinico> historialClinico;
+	// NOTA: HistorialMedico ahora se relaciona a través de Cita, no directamente con Mascota
+	// Para obtener el historial médico de una mascota, usar: HistorialMedicoRepository.findByMascotaId(mascotaId)
 
 	public Mascota() {}
 
@@ -114,9 +127,6 @@ public class Mascota {
 
 	public List<Cita> getCitas() { return citas; }
 	public void setCitas(List<Cita> citas) { this.citas = citas; }
-
-	public List<HistorialClinico> getHistorialClinico() { return historialClinico; }
-	public void setHistorialClinico(List<HistorialClinico> historialClinico) { this.historialClinico = historialClinico; }
 
 	@Override
 	public boolean equals(Object o) {

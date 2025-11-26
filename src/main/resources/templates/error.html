@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Error - Garritas Veterinaria</title>
+  <link rel="stylesheet" href="/static/css/main.css" />
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; }
+    .error-box { max-width: 800px; margin: 2rem auto; border: 1px solid #eee; padding: 1.5rem; border-radius: 6px; background:#fff }
+    .muted { color: #666 }
+  </style>
+</head>
+<body>
+  <div class="error-box">
+    <h1>Ha ocurrido un error inesperado</h1>
+    <p class="muted">Por favor, contacte al administrador o inténtelo más tarde.</p>
+
+    <div>
+      <strong>Ruta:</strong> <span th:text="${path}">/</span>
+    </div>
+    <div style="margin-top:.75rem">
+      <strong>Mensaje:</strong>
+      <div th:if="${error}" th:text="${error}">Detalles no disponibles</div>
+    </div>
+
+    <p style="margin-top:1rem"><a th:href="@{/}">Volver al inicio</a></p>
+  </div>
+</body>
+</html>

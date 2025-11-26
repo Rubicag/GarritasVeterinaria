@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head}" th:with="pageTitle='Configuración - Garritas Veterinaria'"></th:block>
+    <link rel="stylesheet" href="/static/css/theme.css"/>
+</head>
+<body class="bg-light">
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-cog me-2"></i>Configuración</h5>
+            </div>
+            <div class="card-body">
+                <p th:if="${username}">Usuario: <strong th:text="${username}">usuario</strong></p>
+                <p>Desde aquí puedes ajustar parámetros de la aplicación.</p>
+
+                <div th:if="${isAdmin}">
+                    <form th:action="@{/configuracion}" method="post" th:object="${configForm}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre del sitio</label>
+                            <input class="form-control" type="text" th:field="*{siteName}" />
+                            <div class="text-danger" th:if="${#fields.hasErrors('siteName')}" th:errors="*{siteName}"></div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" th:field="*{maintenance}" />
+                            <label class="form-check-label">Modo mantenimiento</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Items por página</label>
+                            <input class="form-control" type="number" th:field="*{itemsPerPage}" min="1" />
+                            <div class="text-danger" th:if="${#fields.hasErrors('itemsPerPage')}" th:errors="*{itemsPerPage}"></div>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit"><i class="fas fa-save me-1"></i> Guardar</button>
+                        <a class="btn btn-secondary" th:href="@{/}"><i class="fas fa-home me-1"></i> Volver</a>
+                    </form>
+                </div>
+
+                <div th:unless="${isAdmin}">
+                    <dl>
+                        <dt>Nombre del sitio</dt>
+                        <dd th:text="${siteName}">Garritas Veterinaria</dd>
+                        <dt>Modo mantenimiento</dt>
+                        <dd th:text="${maintenance == 'true' ? 'Activado' : 'Desactivado'}">Desactivado</dd>
+                        <dt>Items por página</dt>
+                        <dd th:text="${itemsPerPage}">20</dd>
+                    </dl>
+                    <a class="btn btn-secondary" th:href="@{/}"><i class="fas fa-home me-1"></i> Volver</a>
+                </div>
+
+                <div class="mt-4">
+                    <h6>Otras configuraciones</h6>
+                    <ul>
+                        <li th:each="entry : ${allConfigs}">
+                            <strong th:text="${entry.key}"></strong>: <span th:text="${entry.value}"></span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div th:if="${successMessage}" class="mt-3">
+                    <div class="alert alert-success" th:text="${successMessage}"></div>
+                </div>
+                <div th:if="${errors}" class="mt-3">
+                    <div class="alert alert-danger">Hay errores en el formulario. Corrígelos y vuelve a intentar.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/toasts :: toasts}"></div>
+    <div th:replace="~{fragments/modals :: modals}"></div>
+</body>
+</html>

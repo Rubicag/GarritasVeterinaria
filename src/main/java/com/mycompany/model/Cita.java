@@ -12,6 +12,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
@@ -26,21 +28,26 @@ public class Cita {
     @Column(name = "id_cita")
     private Long id;
 
+    @NotNull(message = "La mascota es obligatoria")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mascota")
     @JsonIgnoreProperties({"citas", "propietario", "hibernateLazyInitializer", "handler"})
     private Mascota mascota;
 
+    @NotNull(message = "El servicio es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_servicio")
     @JsonIgnoreProperties({"citas", "hibernateLazyInitializer", "handler"})
     private Servicio servicio;
 
+    @NotNull(message = "El veterinario es obligatorio")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_veterinario")
     @JsonIgnoreProperties({"citas", "password", "rol", "mascotas", "hibernateLazyInitializer", "handler"})
     private Usuario veterinario;
 
+    @NotNull(message = "La fecha y hora son obligatorias")
+    @Future(message = "La cita debe ser en una fecha futura")
     private LocalDateTime fecha;
 
     private LocalTime hora;

@@ -9,6 +9,7 @@ import com.mycompany.repository.MascotaRepository;
 import com.mycompany.repository.ServicioRepository;
 import com.mycompany.repository.UsuarioRepository;
 import com.mycompany.service.CitaService;
+import com.mycompany.service.NotificacionService;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +46,9 @@ public class CitaServiceTest {
     @Mock
     private UsuarioRepository usuarioRepository;
 
+    @Mock
+    private NotificacionService notificacionService;
+
     private CitaService citaService;
     private Cita sampleCita;
     private Mascota sampleMascota;
@@ -54,7 +58,7 @@ public class CitaServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        citaService = new CitaService(citaRepository, mascotaRepository, servicioRepository, usuarioRepository);
+        citaService = new CitaService(citaRepository, mascotaRepository, servicioRepository, usuarioRepository, notificacionService);
         
         // Crear veterinario de prueba
         sampleVeterinario = new Usuario();
